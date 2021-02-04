@@ -24,3 +24,18 @@ unsigned char* Color::writeToBuff(unsigned char* buff) {
     buff[3] = alpha;
     return buff + 4;
 }
+
+void Color::clamp(void) {
+    if(color.x < 0)
+        color.x = 0;
+    if(color.x > 255)
+        color.x = 255;
+    if(color.y < 0)
+        color.y = 0;
+    if(color.y > 255)
+        color.y = 255;
+    if(color.z < 0)
+        color.z = 0;
+    if(color.z > 255)
+        color.z = 255;
+}

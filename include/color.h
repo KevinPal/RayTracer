@@ -15,6 +15,7 @@ class Color {
         Color(Vector3f color, int alpha);
 
         unsigned char* writeToBuff(unsigned char* buff);
+        void clamp(void);
 };
 
 #endif

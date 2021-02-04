@@ -1,10 +1,10 @@
-#ifndef PLANE_H
-#define PLANE_H
+#ifndef PRIMITIVES_H
+#define PRIMITIVES_H
 
 #include "renderable.h"
 #include "color.h"
 
-class Plane : Renderable {
+class Plane : public Renderable {
     public:
         Vector3f point;
         Vector3f norm;

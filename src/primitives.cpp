@@ -1,5 +1,5 @@
 #include "renderable.h"
-#include "plane.h"
+#include "primitives.h"
 #include "math.h"
 #include <stdio.h>
 
@@ -13,11 +13,11 @@ IntersectData Plane::intersects(Ray r) {
     if(d != 0) {
         out.t = (this->point - r.origin).dot(this->norm) / d;
         out.color = this->color;
+        out.normal = norm;
     } else {
         out.t = nan("");
     }
 
     return out;
 }
-
 

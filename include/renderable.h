@@ -9,6 +9,7 @@ class IntersectData {
     public:
         float t;
         Color color;
+        Vector3f normal;
 
         IntersectData() {}
 };
