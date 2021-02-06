@@ -140,6 +140,14 @@ Vector3f Vector3f::cross(const Vector3f& other) const{
         );
 }
 
+bool Vector3f::operator==(const Vector3f& other) const {
+    return (this->x == other.x) && (this->y == other.y) && (this->z == other.z);
+}
+
+bool Vector3f::operator!=(const Vector3f& other) const {
+    return !(*this == other);
+}
+
 void Vector3f::print(void) const {
     printf("<%f %f %f>", x, y, z);
 }

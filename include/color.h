@@ -13,6 +13,7 @@ class Color {
         Color(int r, int g, int b);
         Color(Vector3f color);
         Color(Vector3f color, int alpha);
+        Color(const Color& other);
 
         unsigned char* writeToBuff(unsigned char* buff);
         void clamp(void);

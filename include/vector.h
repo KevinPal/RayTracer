@@ -59,6 +59,9 @@ class Vector3f {
         float dot(const Vector3f& other) const;
         Vector3f cross(const Vector3f& other) const;
 
+        bool operator==(const Vector3f& other) const;
+        bool operator!=(const Vector3f& other) const;
+
         void print(void) const;
 };
 

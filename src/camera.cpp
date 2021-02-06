@@ -11,8 +11,8 @@ Camera::Camera(Vector3f location_, Vector3f up_, Vector3f right_,
     // Invert stride's y since +y is up in world but -y is up in screen
     //
     //
-    up.normalize().print();
-    right.print();
+    //up.normalize().print();
+    //right.print();
     this->up = this->up.normalize() * world_stride.y;
     this->right = this->right.normalize() * world_stride.x;
     this->norm = up.cross(right).normalize();
@@ -24,7 +24,7 @@ RayIterator::RayIterator(Camera& camera_, int x, int y) : camera(camera_) {
     screen_cord = Vector2f(x, y);
 
     Vector2f screen_offset = (screen_cord - (camera.resolution / 2));
-    camera.resolution.print();
+    //camera.resolution.print();
     // Minus y here since screen coords up is -y
     world_cord = camera.location + (camera.right * screen_offset.x - camera.up * screen_offset.y);
 }
@@ -48,6 +48,11 @@ RayIterator& RayIterator::operator++() {
         screen_cord.x += 1;
         world_cord = world_cord + camera.right;
     }
+
+    Vector2f screen_offset = (screen_cord - (camera.resolution / 2));
+    //camera.resolution.print();
+    // Minus y here since screen coords up is -y
+    world_cord = camera.location + (camera.right * screen_offset.x - camera.up * screen_offset.y);
 
     return *this;
 };

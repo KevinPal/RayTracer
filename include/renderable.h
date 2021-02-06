@@ -8,14 +8,22 @@
 class IntersectData {
     public:
         float t;
-        Color color;
         Vector3f normal;
+        Color color;
 
         IntersectData() {}
+        IntersectData(float t_, Vector3f norm_, Color c_):
+            t(t_), normal(norm_), color(c_) {}
+        IntersectData(const IntersectData& other) :
+            IntersectData(other.t, other.normal, other.color) {}
 };
 
 class Renderable {
     public:
+
+        Color color;
+
+        Renderable(Color c) : color(c) {}
         virtual IntersectData intersects(Ray r) = 0;
 };
 

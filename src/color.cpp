@@ -17,6 +17,9 @@ Color::Color(Vector3f color_) :
 Color::Color(Vector3f color_, int alpha_) :
     color(color_), alpha(alpha_) {}
 
+Color::Color(const Color& other):
+    Color(other.color, other.alpha) {}
+
 unsigned char* Color::writeToBuff(unsigned char* buff) {
     buff[0] = this->color.x;
     buff[1] = this->color.y;
