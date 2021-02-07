@@ -23,6 +23,7 @@ class Renderable {
 
         Color color;
 
+        Renderable() {}
         Renderable(Color c) : color(c) {}
         virtual IntersectData intersects(Ray r) = 0;
 };

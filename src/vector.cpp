@@ -148,6 +148,16 @@ bool Vector3f::operator!=(const Vector3f& other) const {
     return !(*this == other);
 }
 
+bool Vector3f::isClose(const Vector3f& other) const {
+    return this->isClose(other, .000001);
+}
+
+bool Vector3f::isClose(const Vector3f& other, float epsilon) const {
+    return (abs(x - other.x) <= epsilon) && 
+                (abs(y - other.y) <= epsilon) && 
+                (abs(z - other.z) <= epsilon);
+}
+
 void Vector3f::print(void) const {
-    printf("<%f %f %f>", x, y, z);
+    printf("<%f %f %f>\n", x, y, z);
 }

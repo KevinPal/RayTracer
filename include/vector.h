@@ -62,6 +62,9 @@ class Vector3f {
         bool operator==(const Vector3f& other) const;
         bool operator!=(const Vector3f& other) const;
 
+        bool isClose(const Vector3f& other) const;
+        bool isClose(const Vector3f& other, float epsilon) const;
+
         void print(void) const;
 };
 
