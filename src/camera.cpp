@@ -15,7 +15,8 @@ Camera::Camera(Vector3f location_, Vector3f up_, Vector3f right_,
     //right.print();
     this->up = this->up.normalize() * world_stride.y;
     this->right = this->right.normalize() * world_stride.x;
-    this->norm = up.cross(right).normalize();
+    //this->norm = up.cross(right).normalize();
+    this->norm = right.cross(up).normalize();
 
 };
 
@@ -81,6 +82,7 @@ PerspectiveCamera::PerspectiveCamera(Vector3f location_, Vector3f up_, Vector3f 
 Ray PerspectiveCamera::project(Vector3f world_cord) {
     Ray r;
     r.fromPoints(eye, world_cord);
-    r.origin = world_cord;
+    //r.origin = world_cord;
+    r.direction.normalize();
     return r;
 }

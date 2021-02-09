@@ -46,6 +46,7 @@ class Vector3f {
 
         float length() const;
         Vector3f normalize();
+        Vector3f norm();
 
         Vector3f operator-(const Vector3f& other) const;
         Vector3f operator+(const Vector3f& other) const;

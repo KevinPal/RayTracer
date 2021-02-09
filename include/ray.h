@@ -14,6 +14,7 @@ class Ray {
 
         void fromPoints(Vector3f start, Vector3f end);
         Vector3f getPoint(float t);
+        void print();
 
 };
 

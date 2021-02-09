@@ -32,6 +32,9 @@ IntersectData Sphere::intersects(Ray r) {
     IntersectData out;
     out.color = this->color;
     Vector3f L = this->center - r.origin;
+
+    float dir_len = r.direction.length();
+    r.direction.normalize();
     float t_ca = L.dot(r.direction);
     if(t_ca < 0) {
         out.t = nan("");
@@ -44,17 +47,30 @@ IntersectData Sphere::intersects(Ray r) {
             float t0 = t_ca - t_hc;
             float t1 = t_ca + t_hc;
 
+
+            /*
             if(t0 > 0) { // Both intersect, t0 is closer so use it
                 out.t = t0;
             } else if(t1 > 0) { // Front of sphere behind camera, but back infront
-                out.t = t1;
+                //out.t = t1;
+                out.t = nan("");
             } else { // Sphere behind camera
                 out.t = nan("");
             }
-
-            if(out.t > 0) {
-                out.normal = (r.getPoint(out.t) - this->center).normalize();
+            */
+            if((t0 > 0) && (t1 > 0)) {
+                out.t =  t0 < t1 ? t0 : t1;
+            } else if(t0 > 0) {
+                out.t = t0;
+            } else if(t1 > 0) {
+                out.t = t1;
+            } else {
+                out.t = nan("");
             }
+
+            out.t /= dir_len;
+
+            out.normal = (r.getPoint(out.t) - this->center).normalize();
         }
     }
 

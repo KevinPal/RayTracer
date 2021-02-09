@@ -104,6 +104,15 @@ Vector3f Vector3f::normalize() {
     return *this;
 }
 
+Vector3f Vector3f::norm() {
+    float len = this->length();
+    return Vector3f(
+        x / len,
+        y / len,
+        z / len
+    );
+}
+
 Vector3f Vector3f::operator-(const Vector3f& other) const {
     return Vector3f(this->x - other.x, this->y - other.y, this->z - other.z);
 }
