@@ -4,6 +4,7 @@
 #include "ray.h"
 #include "vector.h"
 #include "color.h"
+#include <stdio.h>
 
 class IntersectData {
     public:
@@ -24,7 +25,7 @@ class Renderable {
         Color color;
 
         Renderable() {}
-        Renderable(Color c) : color(c) {}
+        Renderable(Color c) : color(c) { }
         virtual IntersectData intersects(Ray r) = 0;
 };
 

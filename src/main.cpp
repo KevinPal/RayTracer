@@ -9,37 +9,39 @@
 #include "display.h"
 #include <math.h>
 
+#include <stack>
+
 int main (int argc, char **argv) {
 
 
     Display* display = Display::getInstance();
 
-    display->init(1500, 1500);
+    display->init(500, 500);
 
     unsigned char* buf = display->getBuffer();
 
-    Plane p(Vector3f(0, 0, 15), Vector3f(0, 0, -1), Color(0, 0, 255));
-    Plane p2(Vector3f(0, 0, 0), Vector3f(0, 1, 0), Color(255, 0, 0));
-    Sphere s(Vector3f(0, 5, 5), 5, Color(255, 0, 255));
+    Plane p(Vector3f(0, 0, 15), Vector3f(0, 0, -1), Color(0, 0, 255, 1, 0));
+    Plane p2(Vector3f(0, 0, 0), Vector3f(0, 1, 0), Color(255, 0, 0, 1, .4));
+    Sphere s(Vector3f(0, 5, 5), 5, Color(255, 0, 255, .5, 0));
     Triangle t(
             Vector3f(0, 0, 10),
-            Vector3f(0, 15, 10),
             Vector3f(15, 0, 5),
-            Color(255, 255, 0));
+            Vector3f(0, 15, 10),
+            Color(255, 255, 0, 1));
 
     Prism r(
             Vector3f(5, 0, -5),
             Vector3f(0, 1, 0),
             Vector3f(1, 0, 1),
             Vector3f(5, 10, 5),
-            Color(0, 255, 255));
+            Color(0, 255, 255, .5));
 
     Prism r2(
             Vector3f(-7, 1, -6),
             Vector3f(0, 1, 0),
             Vector3f(0, 1, 2),
             Vector3f(5, 5, 5),
-            Color(100, 100, 100));
+            Color(100, 100, 100, .8, 0));
 
     Mesh scene;
     scene.addObject(&p);
@@ -99,16 +101,58 @@ int main (int argc, char **argv) {
         if(true) {
             // Do lighting
             if(hit) {
+                Vector3f hit_pos = ray.getPoint(min_hit.t);
+                float spec = min_hit.color.specular;
+
+                std::stack<Color> alpha_stack;
+
+                Ray alpha_ray;
+                alpha_ray.direction = ray.direction;
+                alpha_ray.origin = hit_pos;
+
+                alpha_stack.push(min_hit.color);
+
+                while(alpha_stack.top().alpha != 1) {
+                    alpha_ray.origin = alpha_ray.getPoint(1e-4);
+                    IntersectData alpha_data = scene.intersects(alpha_ray);
+                    if(alpha_data.t != nan("") && (alpha_data.t >= 0)) {
+                        alpha_stack.push(alpha_data.color);
+                        alpha_ray.origin = alpha_ray.getPoint(alpha_data.t);
+                    } else {
+                        break;
+                    }
+                }
+
+                min_hit.color = alpha_stack.top();
+                alpha_stack.pop();
+                while(!alpha_stack.empty()) {
+                    Color mix_color = alpha_stack.top();
+
+                    min_hit.color.color = (mix_color.color * (mix_color.alpha)) + (min_hit.color.color * (1 - mix_color.alpha));
+                    alpha_stack.pop();
+                }
+
+                if(spec > 0) {
+                    Ray reflection_ray;
+                    reflection_ray.origin = hit_pos;
+                    //reflection_ray.direction = min_hit.normal;
+                    reflection_ray.direction = (min_hit.normal * 2 * ray.direction.dot(min_hit.normal) - ray.direction) * -1;
+
+                    reflection_ray.origin = reflection_ray.getPoint(1e-4);
+                    IntersectData reflection_data = scene.intersects(reflection_ray);
+
+                    if(reflection_data.t != nan("") && (reflection_data.t >= 0)) {
+                        min_hit.color.color = (min_hit.color.color * (1-spec)) + (reflection_data.color.color * spec);
+                    }
+                }
+
+
                 // Do shadow
                 Ray shadow_ray;
-                Vector3f hit_pos = ray.getPoint(min_hit.t);
                 float dist;
-
                 shadow_ray.fromPoints(hit_pos, light);
                 shadow_ray.origin = shadow_ray.getPoint(1e-4);
-                //shadow_ray.direction.normalize();
                 IntersectData shadow_data = scene.intersects(shadow_ray);
-                //shadow_ray.print();
 
                 if(shadow_data.t != nan("") && (shadow_data.t >= 0) && (shadow_data.t < 1)) {
                     min_hit.color = min_hit.color.color / 2;
@@ -120,6 +164,8 @@ int main (int argc, char **argv) {
                 }
 
                 min_hit.color.clamp();
+
+
             }
         }
    

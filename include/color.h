@@ -6,13 +6,16 @@
 class Color {
     public:
         Vector3f color;
-        int alpha;
+        float alpha;
+        float specular;
 
         Color();
-        Color(int r, int g, int b, int a);
+        Color(Vector3f color_, float alpha_, float specular_);
+        Color(int r, int g, int b, float a, float spec);
+        Color(int r, int g, int b, float a);
         Color(int r, int g, int b);
         Color(Vector3f color);
-        Color(Vector3f color, int alpha);
+        Color(Vector3f color, float alpha);
         Color(const Color& other);
 
         unsigned char* writeToBuff(unsigned char* buff);
