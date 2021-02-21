@@ -72,7 +72,7 @@ OrthoCamera::OrthoCamera(Vector3f location_, Vector3f up_, Vector3f right_,
     Camera(location_, up_, right_, size_, resolution_) {}
 
 Ray OrthoCamera::project(Vector3f world_cord) {
-    return Ray(world_cord, norm);
+    return Ray(world_cord + Vector3f(0.5, 0.5, 0), norm);
 }
 
 PerspectiveCamera::PerspectiveCamera(Vector3f location_, Vector3f up_, Vector3f right_,

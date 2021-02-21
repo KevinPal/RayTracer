@@ -3,20 +3,19 @@
 
 #include "vector.h"
 
-class Color {
+class Color : public Vector3f{
     public:
-        Vector3f color;
-        float alpha;
-        float specular;
 
-        Color();
-        Color(Vector3f color_, float alpha_, float specular_);
-        Color(int r, int g, int b, float a, float spec);
-        Color(int r, int g, int b, float a);
-        Color(int r, int g, int b);
-        Color(Vector3f color);
-        Color(Vector3f color, float alpha);
-        Color(const Color& other);
+        Color() : Vector3f() {};
+
+        Color(const Color& other):
+            Vector3f(other) {}
+
+        Color(const Vector3f& other):
+            Vector3f(other) {}
+
+        Color(float x_, float y_, float z_) :
+            Vector3f(x_, y_, z_) {}
 
         unsigned char* writeToBuff(unsigned char* buff);
         void clamp(void);

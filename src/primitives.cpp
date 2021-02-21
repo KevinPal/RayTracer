@@ -3,8 +3,8 @@
 #include "math.h"
 #include <stdio.h>
 
-Plane::Plane(Vector3f point_, Vector3f norm_, Color color_) :
-    Renderable(color_), 
+Plane::Plane(Vector3f point_, Vector3f norm_, Material material_) :
+    Renderable(material_), 
     point(point_), norm(norm_.normalize()) {};
 
 IntersectData Plane::intersects(Ray r) {
@@ -14,7 +14,7 @@ IntersectData Plane::intersects(Ray r) {
     out.normal = norm;
     if(d != 0) {
         out.t = (this->point - r.origin).dot(this->norm) / d;
-        out.color = this->color;
+        out.material = this->material;
     } else {
         out.t = nan("");
     }
@@ -22,15 +22,15 @@ IntersectData Plane::intersects(Ray r) {
     return out;
 }
 
-Sphere::Sphere(Vector3f center_, float radius_, Color color_) :
-    Renderable(color_), 
+Sphere::Sphere(Vector3f center_, float radius_, Material material_) :
+    Renderable(material_), 
     center(center_), radius(radius_) {};
 
 // Matg based off of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 IntersectData Sphere::intersects(Ray r) {
 
     IntersectData out;
-    out.color = this->color;
+    out.material = this->material;
     Vector3f L = this->center - r.origin;
 
     float dir_len = r.direction.length();
@@ -77,8 +77,8 @@ IntersectData Sphere::intersects(Ray r) {
     return out;
 }
 
-Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Color color_) :
-    Renderable(color_), A(A_), B(B_), C(C_) {
+Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
+    Renderable(material_), A(A_), B(B_), C(C_) {
 
         // Precompute normal
         Vector3f v1 = A - B;
@@ -94,7 +94,7 @@ IntersectData Triangle::intersects(Ray r) {
     IntersectData out;
     out.t = nan("");
     out.normal = normal;
-    out.color = color;
+    out.material = material;
     if(d == 0) { // Paralell case
         return out;
     } else {
@@ -128,7 +128,7 @@ IntersectData Triangle::intersects(Ray r) {
 }
 
 Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
-        Vector3f dimensions_, Color color) 
+        Vector3f dimensions_, Material material) 
 : center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {
 
     float half_width = dimensions.x / 2.0;
@@ -148,23 +148,23 @@ Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
     Vector3f front_bot_left  = center - back * half_depth - up * half_height - right * half_width;
 
     // Top
-    triangles[0] = Triangle(back_top_right, back_top_left, front_top_left, color);
-    triangles[1] = Triangle(front_top_right, back_top_right, front_top_left, color);
+    triangles[0] = Triangle(back_top_right, back_top_left, front_top_left, material);
+    triangles[1] = Triangle(front_top_right, back_top_right, front_top_left, material);
     // Bot
-    triangles[2] = Triangle(back_bot_right, back_bot_left, front_bot_left, color);
-    triangles[3] = Triangle(front_bot_right, back_bot_right, front_bot_left, color);
+    triangles[2] = Triangle(back_bot_right, back_bot_left, front_bot_left, material);
+    triangles[3] = Triangle(front_bot_right, back_bot_right, front_bot_left, material);
     // Right
-    triangles[4] = Triangle(front_top_right, back_top_right, front_bot_right, color);
-    triangles[5] = Triangle(back_bot_right, back_top_right, front_bot_right, color);
+    triangles[4] = Triangle(front_top_right, back_top_right, front_bot_right, material);
+    triangles[5] = Triangle(back_bot_right, back_top_right, front_bot_right, material);
     // Left
-    triangles[6] = Triangle(front_top_left, back_top_left, front_bot_left, color);
-    triangles[7] = Triangle(back_bot_left, back_top_left, front_bot_left, color);
+    triangles[6] = Triangle(front_top_left, back_top_left, front_bot_left, material);
+    triangles[7] = Triangle(back_bot_left, back_top_left, front_bot_left, material);
     // Front
-    triangles[8] = Triangle(front_top_left, front_top_right, front_bot_left, color);
-    triangles[9] = Triangle(front_bot_right, front_top_right, front_bot_left, color);
+    triangles[8] = Triangle(front_top_left, front_top_right, front_bot_left, material);
+    triangles[9] = Triangle(front_bot_right, front_top_right, front_bot_left, material);
     // Back
-    triangles[10] = Triangle(back_top_left, back_top_right, back_bot_left, color);
-    triangles[11] = Triangle(back_bot_right, back_top_right, back_bot_left, color);
+    triangles[10] = Triangle(back_top_left, back_top_right, back_bot_left, material);
+    triangles[11] = Triangle(back_bot_right, back_top_right, back_bot_left, material);
 
     // Add triangles to mesh
     for(int i = 0; i < 12; i++) {

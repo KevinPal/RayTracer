@@ -11,7 +11,7 @@ class Plane : public Renderable {
         Vector3f norm;
 
         Plane(Vector3f point, Vector3f norm);
-        Plane(Vector3f point, Vector3f norm, Color color);
+        Plane(Vector3f point, Vector3f norm, Material material);
 
         IntersectData intersects(Ray r) override;
 };
@@ -23,7 +23,7 @@ class Sphere : public Renderable {
         float radius;
 
         Sphere(Vector3f point, float radius);
-        Sphere(Vector3f point, float radius, Color color);
+        Sphere(Vector3f point, float radius, Material material);
 
         IntersectData intersects(Ray r) override;
 };
@@ -38,7 +38,7 @@ class Triangle : public Renderable {
         Vector3f C;
 
         Triangle() {};
-        Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Color color_);
+        Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material);
         IntersectData intersects(Ray r);
 
 };
@@ -51,7 +51,7 @@ class Prism : public Mesh {
         Vector3f right;
         Vector3f dimensions;
 
-        Prism(Vector3f center_, Vector3f up_, Vector3f right_, Vector3f dimensions_, Color color_);
+        Prism(Vector3f center_, Vector3f up_, Vector3f right_, Vector3f dimensions_, Material material);
 
         Triangle triangles[12];
 

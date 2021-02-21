@@ -38,9 +38,9 @@ class Vector3f {
         float y;
         float z;
 
+        Vector3f();
         Vector3f(const Vector3f& other);
         Vector3f(const Vector2f& other);
-        Vector3f();
         Vector3f(float x_, float y_);
         Vector3f(float x_, float y_, float z_);
 

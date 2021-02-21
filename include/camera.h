@@ -33,7 +33,7 @@ class Camera {
 
     friend RayIterator;
 
-    protected:
+    public:
         Vector3f location;
         Vector3f up;
         Vector3f right;
@@ -42,7 +42,6 @@ class Camera {
         Vector2f size;
         Vector2f resolution;
 
-    public:
 
         Camera(Vector3f location_, Vector3f up_, Vector3f right_,
                 Vector2f size_, Vector2f resolution_);

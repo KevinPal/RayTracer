@@ -2,49 +2,25 @@
 #include "vector.h"
 #include <stdio.h>
 
-// Default constructor to green
-Color::Color(int r, int g, int b, float a, float spec) :
-    color(Vector3f(r, g, b)), alpha(a), specular(spec) {}
-
-Color::Color(int r, int g, int b, float a) :
-    color(Vector3f(r, g, b)), alpha(a), specular(0) {}
-
-Color::Color(int r, int g, int b) :
-    Color(r, g, b, 1, 0) {}
-
-Color::Color(Vector3f color_, float alpha_, float specular_) :
-    color(color_), alpha(alpha_), specular(specular_) { }
-
-Color::Color() :
-    Color(Vector3f(0, 255, 0), 1, 0) {}
-
-Color::Color(Vector3f color_) :
-    Color(color_, 1, 0) {}
-
-
-
-Color::Color(const Color& other):
-    Color(other.color, other.alpha, other.specular) {}
-
 unsigned char* Color::writeToBuff(unsigned char* buff) {
-    buff[0] = this->color.x;
-    buff[1] = this->color.y;
-    buff[2] = this->color.z;
-    buff[3] = (int) (alpha * 255);
+    buff[0] = (char) (this->x * 255);
+    buff[1] = (char) (this->y * 255);
+    buff[2] = (char) (this->z * 255);
+    buff[3] = 0;
     return buff + 4;
 }
 
 void Color::clamp(void) {
-    if(color.x < 0)
-        color.x = 0;
-    if(color.x > 255)
-        color.x = 255;
-    if(color.y < 0)
-        color.y = 0;
-    if(color.y > 255)
-        color.y = 255;
-    if(color.z < 0)
-        color.z = 0;
-    if(color.z > 255)
-        color.z = 255;
+    if(x < 0)
+        x = 0;
+    if(x > 1)
+        x = 1;
+    if(y < 0)
+        y = 0;
+    if(y > 1)
+        y = 1;
+    if(z < 0)
+        z = 0;
+    if(z > 1)
+        z = 1;
 }
