@@ -6,6 +6,7 @@
 #include "material.h"
 #include "display.h"
 #include "renderer.h"
+#include "antialias.h"
 
 #include <vector>
 #include <math.h>
@@ -18,7 +19,7 @@ int main (int argc, char **argv) {
 
     Display* display = Display::getInstance();
 
-    display->init(1500, 1500);
+    display->init(250, 250);
 
     unsigned char* buf = display->getBuffer();
 
@@ -48,7 +49,7 @@ int main (int argc, char **argv) {
             Vector3f(0, 1, 0),
             Vector3f(1, 0, 1),
             Vector3f(5, 10, 5),
-            Material(Color(0.0f, 1.0f, 1.0f), 0.5, 0, 0));
+            Material(Color(0.0f, 1.0f, 1.0f), 0.25, 0, 0));
 
     Prism r2(
             Vector3f(-7, 1, -6),
@@ -89,13 +90,29 @@ int main (int argc, char **argv) {
     */
 
 
+    int i = 0;
     for (auto it = cam.begin(), end = cam.end(); it != end; ++it) {
         Ray ray = *it;
         Vector2f screen_coord = it.getScreenCord();
 
-        IntersectData hit = renderRay(ray, &scene, 3);
+        Vector3f color = Vector3f(0, 0, 0);
 
-        (hit.t >= 0 ? hit.material.color : bg).writeToBuff(&(buf[(int)(4 * (screen_coord.y * display->getWidth() + screen_coord.x))]));
+        AntiAliaser* anti_aliaser;
+        int count = 0;
+
+        for(anti_aliaser = new GridAntiAliaser(&it, 2); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
+            IntersectData hit = renderRay(**anti_aliaser, &scene, 3);
+            count += 1;
+            color = color + (hit.t >= 0 ? hit.material.color : bg);
+        }
+
+        color = color / count;
+
+        Color(color).writeToBuff(&(buf[(int)(4 * (screen_coord.y * display->getWidth() + screen_coord.x))]));
+
+        i += 1;
+        if(i % 500 == 0)
+            printf("%.3f\%\n",  i * 100.0 / (display->getWidth() * display->getHeight()));
     }
 
     display->run();

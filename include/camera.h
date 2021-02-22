@@ -10,19 +10,20 @@ class Camera;
 class RayIterator {
 
     private:
-        Camera& camera;
         Vector3f world_cord;
         Vector2f screen_cord;
 
     public:
+        Camera& camera;
+
         RayIterator(Camera& camera, int x, int y);
 
         Ray operator*() const;
         RayIterator& operator++();
         RayIterator operator++(int);
 
-        Vector2f getScreenCord() { return screen_cord; }
-        Vector3f getWorldCord() { return world_cord; }
+        Vector2f getScreenCord() const { return screen_cord; }
+        Vector3f getWorldCord() const { return world_cord; }
 
         bool operator==(const RayIterator& other);
         bool operator!=(const RayIterator& other);

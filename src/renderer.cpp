@@ -36,7 +36,9 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
 
         while(alpha_stack.top().alpha != 1) {
             alpha_ray.origin = alpha_ray.getPoint(1e-4);
-            IntersectData alpha_data = scene->intersects(alpha_ray);
+            //IntersectData alpha_data = scene->intersects(alpha_ray);
+            IntersectData alpha_data = renderRay(alpha_ray, scene, depth);
+
             if(alpha_data.t != nan("") && (alpha_data.t >= 0)) {
                 alpha_stack.push(alpha_data.material);
                 alpha_ray.origin = alpha_ray.getPoint(alpha_data.t);
