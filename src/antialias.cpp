@@ -20,19 +20,23 @@ Ray GridAntiAliaser::operator*() const {
 GridAntiAliaser& GridAntiAliaser::operator++() {
 
     // If we hit the right hand side of the pixel, loop left and move one down
-    if(screen_offset.x >= 1) {
+    if(screen_offset.x >= (1 - 1.0/grid_size)) {
         screen_offset = Vector2f(0, screen_offset.y + 1.0 / grid_size);
     } else {
         screen_offset.x += 1.0 / grid_size;
     }
 
     // Translate the screen offset into a world offset based on the cameras basis vectors
-    world_cord = ray_iter->getWorldCord() + (ray_iter->camera.right * screen_offset.x + ray_iter->camera.up * screen_offset.y);
+    Vector2f screen_cord = ray_iter->getScreenCord() + screen_offset;
+
+
+    Vector2f global_screen_offset = (screen_cord - (ray_iter->camera.resolution / 2));
+    world_cord = ray_iter->camera.location + (ray_iter->camera.right * global_screen_offset.x - ray_iter->camera.up * global_screen_offset.y);
     return *this;
 }
 
 // Checks if we are done rendering every subpixel
 bool GridAntiAliaser::isDone() {
-    return screen_offset.x >= 1 && screen_offset.y >= 1;
+    return screen_offset.x >= (1-1.0/grid_size) && screen_offset.y >= 1 - 1.0/grid_size;
 }
 

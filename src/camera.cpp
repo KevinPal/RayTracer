@@ -48,10 +48,10 @@ RayIterator& RayIterator::operator++() {
     if(screen_cord.x == camera.resolution.x) {
         screen_cord = Vector2f(0, screen_cord.y + 1);
         // Move all the way back left, then down 1
-        world_cord = world_cord - (camera.right * camera.resolution.x) - camera.up;
+        //world_cord = world_cord - (camera.right * camera.resolution.x) - camera.up;
     } else {
         screen_cord.x += 1;
-        world_cord = world_cord + camera.right;
+        //world_cord = world_cord + camera.right;
     }
 
     Vector2f screen_offset = (screen_cord - (camera.resolution / 2));
