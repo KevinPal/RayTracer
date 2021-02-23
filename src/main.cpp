@@ -19,7 +19,7 @@ int main (int argc, char **argv) {
 
     // Setup the display and get the buffer
     Display* display = Display::getInstance();
-    display->init(500, 500);
+    display->init(250, 250);
     unsigned char* buf = display->getBuffer();
 
 
@@ -135,7 +135,7 @@ int main (int argc, char **argv) {
         // If we have an anti aliaser, loop across all the rays from it, and do an intersection test
         // Otherwise just do it for the main ray
         if(true) {
-            for(anti_aliaser = new GridAntiAliaser(&it, 3); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
+            for(anti_aliaser = new RandomAntiAliaser(&it, 3, 2); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
                 IntersectData hit = renderRay(**anti_aliaser, &scene, 3);
                 count += 1;
                 color = color + (hit.t >= 0 ? hit.material.color : bg);
@@ -157,7 +157,7 @@ int main (int argc, char **argv) {
     }
 
     // Write to a PNG for handing
-    display->writeToPNG("images/mp1/anti_aliased.png");
+    //display->writeToPNG("images/mp1/anti_aliased.png");
 
     // Display the image
     display->run();

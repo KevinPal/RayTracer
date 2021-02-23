@@ -59,6 +59,7 @@ class GridAntiAliaser : public AntiAliaser {
 
 /*
  * An implementation of an antialiasing method
+ * Uses multi jittered sampling, with a 4x4 course and arbitrary fine grid
  * Generates subrays using a random pixel in a grid
  */
 class RandomAntiAliaser : public AntiAliaser {
@@ -72,6 +73,11 @@ class RandomAntiAliaser : public AntiAliaser {
     public:
         int grid_size;
         int num_samples;
+        int curr_sample;
+
+        int rook_index;
+        int rook_x;
+        int rook_y;
 
         // Wraps a ray iterator. Will num sample rays in the grid
         RandomAntiAliaser(const RayIterator* iter, int grid_size_, int num_samples);

@@ -8,6 +8,7 @@ by Kevin Palani
 - color: Generic color wrapper
 - display: Methods to render to a PNG or to a window
 - material: Represents a material
+- main: Sets up the scene and loops across all rays
 - mesh: Methods to deal with groups of renderables
 - primitives: Render logic for primitiaves like triangles, planes, spheres, etc
 - ray: Defines a ray for ray tracing
@@ -33,14 +34,15 @@ downwards to be able to see the blue plane. Since the plane passes through
 the viewplane, we are able to see underneath it.
 ![Orthographic Camera](images/mp1/ortho.png)
 
-A perspective rendering of the same scene, except of to the right
+A perspective rendering of the same scene, except off to the right
 ![Perspective Camera from another angle](images/mp1/other_angle.png)
 
 To show antialiasing, a zoomed in version of the scene at lower resolution
 is rendered:
 ![Aliased](images/mp1/aliased.png)
 
-We can compare this to we antialiasing is enabled:
+We can compare this to when antialiasing is enabled with a 4x4 course grid
+and a 9x9 fine grid
 ![Anti Aliased](images/mp1/anti_aliased.png)
 
 
