@@ -3,14 +3,15 @@
 #include "math.h"
 #include <stdio.h>
 
+// Plane constructor. Normalizes the normal
 Plane::Plane(Vector3f point_, Vector3f norm_, Material material_) :
     Renderable(material_), 
     point(point_), norm(norm_.normalize()) {};
 
+// Plane ray intersection math
 IntersectData Plane::intersects(Ray r) {
     IntersectData out;
     float d = this->norm.dot(r.direction);
-    //printf("<%f %f %f> * <%f %f %f> = <%f>", norm.x, norm.y, norm.z, r.direction.x, r.direction.y, r.direction.z, d);
     out.normal = norm;
     if(d != 0) {
         out.t = (this->point - r.origin).dot(this->norm) / d;
@@ -22,11 +23,13 @@ IntersectData Plane::intersects(Ray r) {
     return out;
 }
 
+// Sphere constructor
 Sphere::Sphere(Vector3f center_, float radius_, Material material_) :
     Renderable(material_), 
     center(center_), radius(radius_) {};
 
-// Matg based off of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+// Math based off of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
+// Tests if ray intersects sphere, and calculates normal if so
 IntersectData Sphere::intersects(Ray r) {
 
     IntersectData out;
@@ -47,17 +50,6 @@ IntersectData Sphere::intersects(Ray r) {
             float t0 = t_ca - t_hc;
             float t1 = t_ca + t_hc;
 
-
-            /*
-            if(t0 > 0) { // Both intersect, t0 is closer so use it
-                out.t = t0;
-            } else if(t1 > 0) { // Front of sphere behind camera, but back infront
-                //out.t = t1;
-                out.t = nan("");
-            } else { // Sphere behind camera
-                out.t = nan("");
-            }
-            */
             if((t0 > 0) && (t1 > 0)) {
                 out.t =  t0 < t1 ? t0 : t1;
             } else if(t0 > 0) {
@@ -77,6 +69,8 @@ IntersectData Sphere::intersects(Ray r) {
     return out;
 }
 
+
+// Triangle constructor, which computes the triangles normal
 Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
     Renderable(material_), A(A_), B(B_), C(C_) {
 
@@ -88,6 +82,7 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
 };
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
+// TODO make this use barycentric coords
 IntersectData Triangle::intersects(Ray r) {
 
     float d = normal.dot(r.direction);
@@ -98,8 +93,6 @@ IntersectData Triangle::intersects(Ray r) {
     if(d == 0) { // Paralell case
         return out;
     } else {
-        //float t = (normal.dot(r.origin) + normal.dot(A)) / d;
-        //out.t = (this->point - r.origin).dot(this->norm) / d;
         float t = (A - r.origin).dot(normal) / d;
         if(t < 0) { // Ray behind case
             return out;
@@ -127,6 +120,8 @@ IntersectData Triangle::intersects(Ray r) {
     }
 }
 
+// Prism constructor. Breaks up the prisim into 12 triangles and
+// pushes them to a mesh
 Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
         Vector3f dimensions_, Material material) 
 : center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {

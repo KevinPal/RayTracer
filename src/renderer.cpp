@@ -11,33 +11,44 @@
 
 #define CLAMP(X, A, B) ((X) < (A) ? (A) : ((X) > (B) ? (B) : (X)))
 
+
+// The bulk of the rendering code is here for now, but will
+// get moved as the lightning logic gets cleaned up
 IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
 
-    // TODO
+    // We hard code a single light position for now
     Vector3f light(10, 10, -15);
     float l_int = 10.0;
 
+    // Test if the ray hits anything in the scene
     bool hit = false;
     IntersectData min_hit = scene->intersects(ray);
     hit = (min_hit.t >= 0);
    
-    // Do lighting
     if(hit) {
         Vector3f hit_pos = ray.getPoint(min_hit.t);
         float spec = min_hit.material.specular;
 
-        std::stack<Material> alpha_stack;
 
+        // 
+        // transperency support. Everytime the ray hits something,
+        // we move it slightly forward and send the ray out again, until
+        // it hits something opaque or nothing at all. We then blend
+        // these colors backwards according to their alphas to get the final
+        // color
+        //
+        std::stack<Material> alpha_stack;
         Ray alpha_ray;
         alpha_ray.direction = ray.direction;
         alpha_ray.origin = hit_pos;
 
         alpha_stack.push(min_hit.material);
 
+        // Repededly move the ray forward and retest
         while(alpha_stack.top().alpha != 1) {
             alpha_ray.origin = alpha_ray.getPoint(1e-4);
             //IntersectData alpha_data = scene->intersects(alpha_ray);
-            IntersectData alpha_data = renderRay(alpha_ray, scene, depth);
+            IntersectData alpha_data = renderRay(alpha_ray, scene, depth - 1);
 
             if(alpha_data.t != nan("") && (alpha_data.t >= 0)) {
                 alpha_stack.push(alpha_data.material);
@@ -47,6 +58,7 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
             }
         }
 
+        // Process the colors in revere and blend the colors together
         min_hit.material = alpha_stack.top();
         alpha_stack.pop();
         while(!alpha_stack.empty()) {
@@ -56,6 +68,10 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
             alpha_stack.pop();
         }
 
+        //
+        // Recursive reflection support. Light gets bounced across the normal if the material is reflective,
+        // and gets recursively processed
+        //
         if((spec > 0) && (depth > 0)) {
             Ray reflection_ray;
             reflection_ray.origin = hit_pos;
@@ -70,8 +86,12 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
             }
         }
 
+        // 
+        // Shadow and shading. We check if the shadow ray has a direct path to
+        // the light. If so, we shadw acording to phong model with no specular
+        // Otherwise, we blacken the color to represent some ambient light
+        //
 
-        // Do shadow
         Ray shadow_ray;
         float dist;
         shadow_ray.fromPoints(hit_pos, light);

@@ -3,12 +3,9 @@
 
 #include <gtk/gtk.h>
 
-/*
-cairo_surface_t* Display::screen;
-unsigned char* Display::buffer;
-*/
 
-
+// Callback for an OS draw request, just draws the underlying frame buffer
+// to the screen
 gboolean Display::onDraw(GtkWidget* widget, cairo_t* cr, gpointer data) {
     Display* display = Display::getInstance();
     //printf("Drawing!\n");
@@ -20,11 +17,14 @@ gboolean Display::onDraw(GtkWidget* widget, cairo_t* cr, gpointer data) {
 
 // cairo_surface_write_to_png ()
 
+// Singleton getInstance
 Display* Display::getInstance() {
     static Display instance;
     return &instance;
 }
 
+// Sets up the display with a given with and height, and setsup
+// the onDraw callback, and allocates the required bufferes
 cairo_status_t Display::init(int width, int height) {
 
     GtkWidget *window;
@@ -63,11 +63,18 @@ cairo_status_t Display::init(int width, int height) {
     gtk_widget_show_all(window);
 }
 
+void Display::writeToPNG(const char* filename) {
+    cairo_surface_flush (screen);
+    cairo_surface_write_to_png (screen, filename);
+}
+
+// Starts whatever is needed to actually display the screen
 void Display::run() {
-    printf("run");
+    printf("running");
     gtk_main();
 }
 
+// Cleans up the display
 void Display::destory() {
     printf("destory");
     cairo_surface_destroy(screen);

@@ -4,6 +4,10 @@
 #include "vector.h"
 #include <math.h>
 
+// Mesh intersection loops across all objects
+// in the mesh, and checks if the ray intersects 
+// it. We keep track of the closest intersection,
+// and return it
 IntersectData Mesh::intersects(Ray ray) {
     bool hit = false;
     IntersectData min_hit;
@@ -20,6 +24,7 @@ IntersectData Mesh::intersects(Ray ray) {
     return min_hit;
 }
 
+// Pushes an object to this mesh
 void Mesh::addObject(Renderable* obj) {
     objects.push_back(obj);
 }
