@@ -70,7 +70,7 @@ bool Vector2f::operator!=(const Vector2f& other) const {
 }
 
 void Vector2f::print(void) const {
-    printf("<%f %f>", x, y);
+    printf("<%f %f>\n", x, y);
 }
 
 // ------ Vector 3f -----

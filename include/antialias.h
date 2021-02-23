@@ -39,7 +39,7 @@ class AntiAliaser {
 class GridAntiAliaser : public AntiAliaser {
 
     private:
-        Vector2f world_cord;
+        Vector3f world_cord;
         Vector2f screen_offset;
         Ray primary_ray;
 
@@ -57,4 +57,28 @@ class GridAntiAliaser : public AntiAliaser {
 
 };
 
+/*
+ * An implementation of an antialiasing method
+ * Generates subrays using a random pixel in a grid
+ */
+class RandomAntiAliaser : public AntiAliaser {
+
+    private:
+        Vector3f world_cord;
+        Vector2f screen_offset;
+        Ray primary_ray;
+
+
+    public:
+        int grid_size;
+        int num_samples;
+
+        // Wraps a ray iterator. Will num sample rays in the grid
+        RandomAntiAliaser(const RayIterator* iter, int grid_size_, int num_samples);
+
+        Ray operator*() const override;
+        RandomAntiAliaser& operator++() override;
+        bool isDone() override;
+
+};
 #endif

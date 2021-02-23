@@ -17,7 +17,30 @@ by Kevin Palani
 
 
 ## MP1 Pictures
+The scene is composed of:
+- A solid pink sphere
+- A solid grey prism
+- A semitransparent yellow prism
+- A slightly reflective blue floor plane
+- A solid red background plane
+- A fully reflective triangle
 
+A perspective rendering on the scene:
 ![Perspective Camera](images/mp1/perspective.png)
+
+An orthographic rendering of the same scene. The camera is tilted slightly
+downwards to be able to see the blue plane. Since the plane passes through
+the viewplane, we are able to see underneath it.
 ![Orthographic Camera](images/mp1/ortho.png)
+
+A perspective rendering of the same scene, except of to the right
 ![Perspective Camera from another angle](images/mp1/other_angle.png)
+
+To show antialiasing, a zoomed in version of the scene at lower resolution
+is rendered:
+![Aliased](images/mp1/aliased.png)
+
+We can compare this to we antialiasing is enabled:
+![Anti Aliased](images/mp1/anti_aliased.png)
+
+

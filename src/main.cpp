@@ -19,7 +19,7 @@ int main (int argc, char **argv) {
 
     // Setup the display and get the buffer
     Display* display = Display::getInstance();
-    display->init(1000, 1000);
+    display->init(500, 500);
     unsigned char* buf = display->getBuffer();
 
 
@@ -77,6 +77,30 @@ int main (int argc, char **argv) {
 
     // Specify the camera. Currently commenting/uncommenting 
     // until we get something more fancy
+    //
+
+    /*
+    PerspectiveCamera cam = PerspectiveCamera(
+        Vector3f(0, 5, -5),
+        Vector3f(0, 1.0, 0),
+        Vector3f(1.0, 0, 0),
+        Vector2f(25.0, 25.0),
+        Vector2f(display->getWidth(), display->getHeight()),
+        Vector3f(0, 5, -25)
+    );
+    */
+
+    PerspectiveCamera cam = PerspectiveCamera(
+        Vector3f(-10, 5, -5),
+        Vector3f(0, 1.0, 0),
+        Vector3f(1.0, 0, -1),
+        Vector2f(15.0, 15.0),
+        Vector2f(display->getWidth(), display->getHeight()),
+        Vector3f(-30, 5, -25)
+    );
+
+    /*
+    // Other angle
     PerspectiveCamera cam = PerspectiveCamera(
         Vector3f(10, 5, -5),
         Vector3f(0, 1.0, 0),
@@ -85,6 +109,7 @@ int main (int argc, char **argv) {
         Vector2f(display->getWidth(), display->getHeight()),
         Vector3f(30, 5, -25)
     );
+    */
     
     /*
     OrthoCamera cam = OrthoCamera(
@@ -109,7 +134,7 @@ int main (int argc, char **argv) {
 
         // If we have an anti aliaser, loop across all the rays from it, and do an intersection test
         // Otherwise just do it for the main ray
-        if(false) {
+        if(true) {
             for(anti_aliaser = new GridAntiAliaser(&it, 3); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
                 IntersectData hit = renderRay(**anti_aliaser, &scene, 3);
                 count += 1;
@@ -131,10 +156,11 @@ int main (int argc, char **argv) {
             printf("%.3f\%\n",  i * 100.0 / (display->getWidth() * display->getHeight()));
     }
 
+    // Write to a PNG for handing
+    display->writeToPNG("images/mp1/anti_aliased.png");
+
     // Display the image
     display->run();
-    // Write to a PNG for handing
-    display->writeToPNG("images/mp1/other_angle.png");
     display->destory();
 
   return 0;
