@@ -15,21 +15,24 @@
  */
 class IntersectData {
     public:
+        bool valid;
         float t;
         Vector3f normal;
         Material material;
 
         // Default consturctor
-        IntersectData() {}
+        IntersectData() : valid(false) {}
 
         // General constructor
         IntersectData(float t_, Vector3f norm_, Material m_):
-            t(t_), normal(norm_), material(m_) {}
+            valid(true), t(t_), normal(norm_), material(m_) {}
 
         // Copy consturctor
         IntersectData(const IntersectData& other) :
             IntersectData(other.t, other.normal, other.material) {}
 };
+
+class AABB;
 
 /*
  * A generic object to be rendered. Subclasses need to
@@ -42,13 +45,34 @@ class Renderable {
     public:
 
         Material material;
+        AABB* bounding_box;
 
         // A generic renderable only needs a known material
-        Renderable() {}
-        Renderable(Material m) : material(m) { }
+        // At the start, any surfaces bounding surface is its self
+        Renderable();
+        Renderable(Material m);
 
         // Method to test if a ray intersects this ibject
         virtual IntersectData intersects(Ray r) = 0;
+        virtual ~Renderable();
+
+};
+
+class AABB : public Renderable {
+
+    public:
+        Vector3f center;
+        Vector3f dimensions;
+
+        Vector3f mins;
+        Vector3f maxs;
+        bool valid;
+
+        IntersectData intersects(Ray r);
+
+        AABB();
+        AABB(Vector3f center_, Vector3f dimensions_, Material m);
+
 };
 
 

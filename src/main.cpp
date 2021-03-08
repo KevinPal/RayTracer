@@ -19,7 +19,7 @@ int main (int argc, char **argv) {
 
     // Setup the display and get the buffer
     Display* display = Display::getInstance();
-    display->init(250, 250);
+    display->init(500, 500);
     unsigned char* buf = display->getBuffer();
 
 
@@ -35,7 +35,7 @@ int main (int argc, char **argv) {
     Plane p2(
          Vector3f(0, 0, 0),
          Vector3f(0, 1, 0),
-         Material(Color(1.0f, 0.0f, 0.0f), 1, 0, 0.25));
+         Material(Color(1.0f, 0.0f, 0.0f), 1, 0, 0.75));
 
     Sphere s( 
          Vector3f(0, 5, 5), 
@@ -62,6 +62,9 @@ int main (int argc, char **argv) {
             Vector3f(5, 5, 5),
             Material(Color(.5f, .5f, .5f), 1, 0, 0));
 
+    AABB* box = s.bounding_box;
+    box->material.specular = 0.75;
+
     Mesh scene;
     scene.addObject(&p);
     scene.addObject(&p2);
@@ -69,6 +72,7 @@ int main (int argc, char **argv) {
     scene.addObject(&t);
     scene.addObject(&r);
     scene.addObject(&r2);
+    scene.addObject(box);
 
 
     IntersectData data;
@@ -90,6 +94,7 @@ int main (int argc, char **argv) {
     );
     */
 
+    /*
     PerspectiveCamera cam = PerspectiveCamera(
         Vector3f(-10, 5, -5),
         Vector3f(0, 1.0, 0),
@@ -98,8 +103,8 @@ int main (int argc, char **argv) {
         Vector2f(display->getWidth(), display->getHeight()),
         Vector3f(-30, 5, -25)
     );
+    */
 
-    /*
     // Other angle
     PerspectiveCamera cam = PerspectiveCamera(
         Vector3f(10, 5, -5),
@@ -109,7 +114,6 @@ int main (int argc, char **argv) {
         Vector2f(display->getWidth(), display->getHeight()),
         Vector3f(30, 5, -25)
     );
-    */
     
     /*
     OrthoCamera cam = OrthoCamera(
@@ -134,8 +138,8 @@ int main (int argc, char **argv) {
 
         // If we have an anti aliaser, loop across all the rays from it, and do an intersection test
         // Otherwise just do it for the main ray
-        if(true) {
-            for(anti_aliaser = new RandomAntiAliaser(&it, 3, 2); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
+        if(false) {
+            for(anti_aliaser = new GridAntiAliaser(&it, 2); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
                 IntersectData hit = renderRay(**anti_aliaser, &scene, 3);
                 count += 1;
                 color = color + (hit.t >= 0 ? hit.material.color : bg);
@@ -152,8 +156,8 @@ int main (int argc, char **argv) {
 
         // Print progress
         i += 1;
-        if(i % ((display->getWidth() * display->getHeight() / 500)) == 0)
-            printf("%.3f\%\n",  i * 100.0 / (display->getWidth() * display->getHeight()));
+        //if((i * 100 / (display->getWidth() * display->getHeight())) % 5 == 0)
+        //    printf("%.3f\%\n",  i * 100.0 / (display->getWidth() * display->getHeight()));
     }
 
     // Write to a PNG for handing

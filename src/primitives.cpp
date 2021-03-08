@@ -1,12 +1,14 @@
 #include "renderable.h"
 #include "primitives.h"
 #include "math.h"
+#include "vector.h"
 #include <stdio.h>
 
 // Plane constructor. Normalizes the normal
 Plane::Plane(Vector3f point_, Vector3f norm_, Material material_) :
     Renderable(material_), 
-    point(point_), norm(norm_.normalize()) {};
+    point(point_), norm(norm_.normalize()) {
+};
 
 // Plane ray intersection math
 IntersectData Plane::intersects(Ray r) {
@@ -26,7 +28,15 @@ IntersectData Plane::intersects(Ray r) {
 // Sphere constructor
 Sphere::Sphere(Vector3f center_, float radius_, Material material_) :
     Renderable(material_), 
-    center(center_), radius(radius_) {};
+    center(center_), radius(radius_) {
+
+    this->bounding_box = new AABB{
+        center_,
+        Vector3f(radius_ * 2, radius_ * 2, radius_ * 2),
+        material_
+    };
+    
+};
 
 // Math based off of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 // Tests if ray intersects sphere, and calculates normal if so
@@ -79,6 +89,41 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
         Vector3f v2 = C - B;
 
         normal = v1.cross(v2).normalize();
+
+        Vector2f spreads[3];
+        spreads[0].x = spreads[0].y = A_.x;
+        spreads[1].x = spreads[1].y = A_.y;
+        spreads[2].x = spreads[2].y = A_.z;
+
+        spreads[0].x = std::min(spreads[0].x, B_.x);
+        spreads[0].y = std::max(spreads[0].y, B_.x);
+        spreads[1].x = std::min(spreads[1].x, B_.y);
+        spreads[1].y = std::max(spreads[1].y, B_.y);
+        spreads[2].x = std::min(spreads[2].x, B_.z);
+        spreads[2].y = std::max(spreads[2].y, B_.z);
+
+        spreads[0].x = std::min(spreads[0].x, C_.x);
+        spreads[0].y = std::max(spreads[0].y, C_.x);
+        spreads[1].x = std::min(spreads[1].x, C_.y);
+        spreads[1].y = std::max(spreads[1].y, C_.y);
+        spreads[2].x = std::min(spreads[2].x, C_.z);
+        spreads[2].y = std::max(spreads[2].y, C_.z);
+
+        this->bounding_box = new AABB(
+            Vector3f(
+                (spreads[0].y + spreads[0].x) / 2.0,
+                (spreads[1].y + spreads[1].x) / 2.0,
+                (spreads[2].y + spreads[2].x) / 2.0
+            ),
+            Vector3f(
+                (spreads[0].y - spreads[0].x),
+                (spreads[1].y - spreads[1].x),
+                (spreads[2].y - spreads[2].x)
+            ),
+            material_
+        );
+
+
 };
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution

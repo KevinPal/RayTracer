@@ -1,4 +1,5 @@
 #include "vector.h"
+#include <stdexcept>
 #include <math.h>
 #include <stdio.h>
 
@@ -135,6 +136,22 @@ Vector3f Vector3f::operator*(const Vector3f& other) const {
 
 Vector3f Vector3f::operator*(const float& other) const {
     return Vector3f(this->x * other , this->y * other, this->z * other);
+}
+
+// Array access operators
+const float& Vector3f::operator[](int i) {
+    if(i == 0)
+        return this->x;
+    else if(i == 1)
+        return this->y;
+    else if(i == 2)
+        return this->z;
+    else
+        throw std::out_of_range("Vector out of range");
+            
+}
+const float Vector3f::operator[](int i) const {
+    return (*this)[i];
 }
 
 float Vector3f::dot(const Vector3f& other) const{
