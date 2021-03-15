@@ -88,7 +88,7 @@ class Vector3f {
         bool operator!=(const Vector3f& other) const;
 
         // Array access operators
-        const float& operator[](int i);
+        float& operator[](int i);
         const float operator[](int i) const;
 
         // Determines if two vectors are "close" by some epsilon

@@ -188,28 +188,31 @@ Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
     Vector3f front_bot_left  = center - back * half_depth - up * half_height - right * half_width;
 
     // Top
-    triangles[0] = Triangle(back_top_right, back_top_left, front_top_left, material);
-    triangles[1] = Triangle(front_top_right, back_top_right, front_top_left, material);
+    triangles[0] = new Triangle(back_top_right, back_top_left, front_top_left, material);
+    triangles[1] = new Triangle(front_top_right, back_top_right, front_top_left, material);
     // Bot
-    triangles[2] = Triangle(back_bot_right, back_bot_left, front_bot_left, material);
-    triangles[3] = Triangle(front_bot_right, back_bot_right, front_bot_left, material);
+    triangles[2] = new Triangle(back_bot_right, back_bot_left, front_bot_left, material);
+    triangles[3] = new Triangle(front_bot_right, back_bot_right, front_bot_left, material);
     // Right
-    triangles[4] = Triangle(front_top_right, back_top_right, front_bot_right, material);
-    triangles[5] = Triangle(back_bot_right, back_top_right, front_bot_right, material);
+    triangles[4] = new Triangle(front_top_right, back_top_right, front_bot_right, material);
+    triangles[5] = new Triangle(back_bot_right, back_top_right, front_bot_right, material);
     // Left
-    triangles[6] = Triangle(front_top_left, back_top_left, front_bot_left, material);
-    triangles[7] = Triangle(back_bot_left, back_top_left, front_bot_left, material);
+    triangles[6] = new Triangle(front_top_left, back_top_left, front_bot_left, material);
+    triangles[7] = new Triangle(back_bot_left, back_top_left, front_bot_left, material);
     // Front
-    triangles[8] = Triangle(front_top_left, front_top_right, front_bot_left, material);
-    triangles[9] = Triangle(front_bot_right, front_top_right, front_bot_left, material);
+    triangles[8] = new Triangle(front_top_left, front_top_right, front_bot_left, material);
+    triangles[9] = new Triangle(front_bot_right, front_top_right, front_bot_left, material);
     // Back
-    triangles[10] = Triangle(back_top_left, back_top_right, back_bot_left, material);
-    triangles[11] = Triangle(back_bot_right, back_top_right, back_bot_left, material);
+    triangles[10] = new Triangle(back_top_left, back_top_right, back_bot_left, material);
+    triangles[11] = new Triangle(back_bot_right, back_top_right, back_bot_left, material);
 
     // Add triangles to mesh
     for(int i = 0; i < 12; i++) {
-        objects.push_back(&(triangles[i]));
+        objects.push_back(triangles[i]);
     }
 
+    this->buildBoundingBox();
+
+    
 
 }

@@ -139,7 +139,7 @@ Vector3f Vector3f::operator*(const float& other) const {
 }
 
 // Array access operators
-const float& Vector3f::operator[](int i) {
+float& Vector3f::operator[](int i) {
     if(i == 0)
         return this->x;
     else if(i == 1)
@@ -150,6 +150,7 @@ const float& Vector3f::operator[](int i) {
         throw std::out_of_range("Vector out of range");
             
 }
+
 const float Vector3f::operator[](int i) const {
     return (*this)[i];
 }

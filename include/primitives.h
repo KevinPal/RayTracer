@@ -75,7 +75,7 @@ class Prism : public Mesh {
         // to both of these
         Prism(Vector3f center_, Vector3f up_, Vector3f right_, Vector3f dimensions_, Material material);
 
-        Triangle triangles[12];
+        Triangle* triangles[12];
 
 };
 

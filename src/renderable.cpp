@@ -1,5 +1,7 @@
 
+#include <stdio.h>
 #include <math.h>
+#include <algorithm>
 #include "renderable.h"
 
 
@@ -10,20 +12,26 @@ Renderable::Renderable(Material m) :
 
 
 Renderable::~Renderable() {
-    if(this->bounding_box)
+    printf("Desutring\n");
+    if(this->bounding_box && (this->bounding_box != this)) {
         delete this->bounding_box;
+    }
 }
 
 
 AABB::AABB() :
-    valid(false) {}
+    valid(false) {
+    
+    this->bounding_box = this;
+}
 
 
 AABB::AABB(Vector3f center_, Vector3f dimensions_, Material m) :
     Renderable(m), valid(true), center(center_), dimensions(dimensions_) {
-    
-        this->mins = center - dimensions_ / 2.0;
-        this->maxs = center + dimensions_ / 2.0;
+   
+    this->bounding_box = this;
+    this->mins = center - dimensions_ / 2.0;
+    this->maxs = center + dimensions_ / 2.0;
 }
 
 /* 
@@ -62,6 +70,11 @@ IntersectData AABB::intersects(Ray ray) {
         } else {
             quadrant[i] = middle;
         }
+    }
+
+    if(inside) {
+        out.t = 0;
+        return out;
     }
 
     // Get minimum distance to the 3 planes along each axis
@@ -104,5 +117,27 @@ IntersectData AABB::intersects(Ray ray) {
     
     out.t = T[max_plane];
     return out;
+}
+
+void AABB::merge(AABB* other) {
+    //printf("merging this: %d other: %d \n", valid, other.valid);
+    if(!other->valid && valid) {
+        return;
+    } else if(other->valid && !valid) {
+        this->maxs = other->maxs;
+        this->mins = other->mins;
+        this->dimensions = other->dimensions;
+        this->center = other->center;
+        this->valid = true;
+    } else if(valid && other->valid) {
+
+        for(int i = 0; i < 3; i++) {
+            this->maxs[i] = std::max(this->maxs[i], other->maxs[i]);
+            this->mins[i] = std::min(this->mins[i], other->mins[i]);
+        }
+
+        this->center = (this->maxs + this->mins) / 2.0;
+        this->dimensions = (this->maxs - this->mins);
+    }
 }
 

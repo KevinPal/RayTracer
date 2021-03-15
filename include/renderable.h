@@ -5,6 +5,7 @@
 #include "ray.h"
 #include "vector.h"
 #include "color.h"
+#include <math.h>
 #include <stdio.h>
 
 /*
@@ -21,7 +22,7 @@ class IntersectData {
         Material material;
 
         // Default consturctor
-        IntersectData() : valid(false) {}
+        IntersectData() : t(nan("")), valid(false) {}
 
         // General constructor
         IntersectData(float t_, Vector3f norm_, Material m_):
@@ -30,6 +31,8 @@ class IntersectData {
         // Copy consturctor
         IntersectData(const IntersectData& other) :
             IntersectData(other.t, other.normal, other.material) {}
+
+        bool did_hit() { return !std::isnan(t) && t >= 0; }
 };
 
 class AABB;
@@ -69,6 +72,7 @@ class AABB : public Renderable {
         bool valid;
 
         IntersectData intersects(Ray r);
+        void merge(AABB* other);
 
         AABB();
         AABB(Vector3f center_, Vector3f dimensions_, Material m);
