@@ -35,13 +35,16 @@ class Mesh : public Renderable {
         // in this mesh
         IntersectData intersects(Ray r);
 
+        // Tests if a ray intersects the objects without AABBs in this mesh
         IntersectData intersects_large(Ray r);
 
         // Adds a renderable to this mesh
         void addObject(Renderable* obj);
 
+        // Builds a bounding box for this mesh
         AABB* buildBoundingBox(void);
 
+        // Loads this mesh from an OBJ file
         void fromOBJ(std::string path);
 };
 

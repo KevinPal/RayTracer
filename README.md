@@ -22,8 +22,8 @@ by Kevin Palani
 To determine the effectiveness of the BVH, various numbers of spheres were rendered with and without
 the BVH. This was run single threaded on an intel i7-10750H with no GPU optimizations. The BVH had a 
 k=2, meaning leaf nodes on average had 2 elements in them. Spheres were rendered as fully reflective,
-with a maximum recursion depth of 4. All spheres were fully opaque. No antialiasing was done. All images were rendered at 500 x 500
-Times are in miliseconds
+with a maximum recursion depth of 4. All spheres were fully opaque. No antialiasing was done. All images were rendered at 500 x 500.
+Times are in seconds
 
 | Spheres      | Time with BVH  | Time without BVH | Speedup |
 | :---         |     :---:      |     :---:        | :---:   |
@@ -31,14 +31,14 @@ Times are in miliseconds
 | 100	       | 1.026	        | 3.165	           | 3.084   |
 | 1,000	       | 5.037	        | 55.332	       | 10.985  |
 | 10,000	   | 14.061	        | 677.023	       | 48.148  |
-| 100,000	   | 31.053         | WIP              | WIP     |
-| 1,000,000	   | 78.64	        | NA               | WIP     |
+| 100,000	   | 31.053         | 6638.986         | 6638.986|
+| 1,000,000	   | 78.64	        | NA               | NA      |
 
-1,000 Spheres:
+1,000 Spheres:  
 ![1K Spheres](images/mp2/spheres_1000.png)
-10,000 Spheres:
+10,000 Spheres:  
 ![10K Spheres](images/mp2/spheres_10000.png)
-100,000 Spheres:
+100,000 Spheres:  
 ![100K Spheres](images/mp2/spheres_100000.png)
 
 Finally, a mesh with with 100,000 consisting of 50,000 vertices was rendered. 25 sub samples

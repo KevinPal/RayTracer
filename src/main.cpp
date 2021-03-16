@@ -17,11 +17,11 @@
 #include <ctime>
 #include <chrono>
 
-#define DO_ANTI_ALIASING 1
-#define ANTI_ALIASING_NUM 5
+#define DO_ANTI_ALIASING 0
+#define ANTI_ALIASING_NUM 2
 
 #define BVH_LEAF_SIZE 2
-#define CAMERA_NUM 4
+#define CAMERA_NUM 5
 
 #define RAND ((float) (rand() / (float) RAND_MAX))
 
@@ -33,7 +33,7 @@ int main (int argc, char **argv) {
 
     // Setup the display and get the buffer
     Display* display = Display::getInstance();
-    display->init(1000, 1000);
+    display->init(500, 500);
     unsigned char* buf = display->getBuffer();
 
     BVHNode scene(BVH_LEAF_SIZE);
@@ -85,13 +85,15 @@ int main (int argc, char **argv) {
     BVHNode m(5);
     m.material.color = Color(0.133, 0.745, 0.133);
     m.fromOBJ("./res/dragon.obj");
+    m.partition();
 
-    scene.addObject(&p);
-    scene.addObject(&p2);
+
+    //scene.addObject(&p);
+    //scene.addObject(&p2);
+    //6638.986000
 
     int num_spheres = 0;
-    /*
-    while(num_spheres < 1000000) {
+    while(num_spheres < 100000) {
         float sx = RAND * 20 - 10;
         float sy = RAND * 20 - 10;
         float sz = RAND * 100;
@@ -110,26 +112,14 @@ int main (int argc, char **argv) {
         scene.addObject(s);
         num_spheres += 1;
     }
-    */
 
-    m.partition();
+    //scene.addObject(&m);
+
     //scene.addObject(m.bounding_box);
-    scene.addObject(&m);
-
 
     printf("Num spheres: %d\n", num_spheres);
 
     scene.partition();
-
-
-    //scene.addObject(scene.left->left->bounding_box);
-    //scene.addObject(scene.right->left->right->bounding_box);
-    //scene.addObject(scene.right->left->left->right->bounding_box);
-
-    //scene.objects[scene.objects.size()-1]->material.color[0] = 255.0;
-    //scene.objects[scene.objects.size()-1]->material.color[1] = 255.0;
-    //scene.objects[scene.objects.size()-1]->material.color[2] = 255.0;
-    //scene.addObject(scene.right->bounding_box);
 
     IntersectData data;
     Color bg(100, 100, 100);
@@ -212,7 +202,7 @@ int main (int argc, char **argv) {
         // Otherwise just do it for the main ray
         if(DO_ANTI_ALIASING) {
             for(anti_aliaser = new GridAntiAliaser(&it, ANTI_ALIASING_NUM); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
-                IntersectData hit = renderRay(**anti_aliaser, &scene, 3);
+                IntersectData hit = renderRay(**anti_aliaser, &scene, 6);
                 count += 1;
                 color = color + (hit.t >= 0 ? hit.material.color : bg);
             }
@@ -238,7 +228,7 @@ int main (int argc, char **argv) {
     printf("Took %f\n", (end - start) / 1000.0);
 
     // Write to a PNG for handing
-    display->writeToPNG("images/mp2/mesh.png");
+    //display->writeToPNG("images/mp2/mesh.png");
 
     // Display the image
     display->run();

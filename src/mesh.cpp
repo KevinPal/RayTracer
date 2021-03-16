@@ -13,12 +13,15 @@
 #include <iostream>
 #include <cassert>
 
+// Default constructor for a mesh with an empty AABB
 Mesh::Mesh()
  : Renderable(Color()) {
 
     this->bounding_box = new AABB();
 }
 
+// Creates a mesh from already existing renderables, where start is an iterator 
+// pointing to the start of elements to copy and end is the ending iterator to copy
 Mesh::Mesh(std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end)
     : Renderable(Color()) { 
     
@@ -55,7 +58,8 @@ IntersectData Mesh::intersects(Ray ray) {
     return min_hit;
 }
 // Same as intersects, except only for the large objects
-// in this mesh
+// in this mesh. This is done sepereatly because large objects, such
+// as planes, do not have a valid AABB and must always be checked
 IntersectData Mesh::intersects_large(Ray ray) {
     bool hit = false;
     IntersectData min_hit;
@@ -75,12 +79,9 @@ IntersectData Mesh::intersects_large(Ray ray) {
 
 }
 
-template<typename Base, typename T>
-inline bool instanceof(const T*) {
-   return std::is_base_of<Base, T>::value;
-}
-
-// Pushes an object to this mesh
+// Pushes an object to this mesh. Attempts to build its bounding box
+// if it does not have one. If it does, the meshes bounding box
+// expands to include it, otherwise it is held with the large objects
 void Mesh::addObject(Renderable* obj) {
 
     // If it has no bounding box but it is a mesh, build the box
@@ -96,6 +97,8 @@ void Mesh::addObject(Renderable* obj) {
     }
 }
 
+// Builds a bounding box for this mesh by unioning all
+// the bounding boxes of the elements in this mesh
 AABB* Mesh::buildBoundingBox(void) {
 
     for(Renderable* r : this->objects) {
@@ -107,6 +110,10 @@ AABB* Mesh::buildBoundingBox(void) {
     return this->bounding_box;
 }
 
+// Builds a mesh from an obj file. Only supports 'v' and 'f'
+// statements. Vertex normals are averaged for each face
+// connected to the vertex, and are area weighted. Adds
+// the new triangles to the mesh
 void Mesh::fromOBJ(std::string path) {
     std::vector<Vector3f> verticies;
     std::vector<Vector3f> faces;
@@ -134,6 +141,8 @@ void Mesh::fromOBJ(std::string path) {
             }
         }
     }
+
+    printf("Mesh has %d verticies with %d faces\n", verticies.size(), faces.size());
 
     Vector3f face_norms[faces.size()];
     float face_norm_size[faces.size()];
@@ -167,7 +176,6 @@ void Mesh::fromOBJ(std::string path) {
     // Weight each normal according to area
     for(int i = 0; i < verticies.size(); i++) {
         vertex_norms[i] = vertex_norms[i] / vertex_norm_size[i];
-        vertex_norms[i].print();
     }
 
     // Make triangles and push into mesh

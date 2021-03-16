@@ -25,6 +25,7 @@ IntersectData Plane::intersects(Ray r) {
     return out;
 }
 
+// Creates bounding box. Planes do not have one so returns null
 AABB* Plane::buildBoundingBox() {return NULL; }
 
 // Sphere constructor
@@ -35,6 +36,7 @@ Sphere::Sphere(Vector3f center_, float radius_, Material material_) :
     this->bounding_box = this->buildBoundingBox();
 };
 
+// Buildings the bounding box for the sphere
 AABB* Sphere::buildBoundingBox() {
     return new AABB{
         center,
@@ -85,6 +87,8 @@ IntersectData Sphere::intersects(Ray r) {
     return out;
 }
 
+// Constructor for a triangle that has per vertex normals. Still
+// calculates the face normal
 Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
         Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_, Material material_) :
     Renderable(material_), A(A_), B(B_), C(C_), 
@@ -98,7 +102,8 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_,
 }
 
 
-// Triangle constructor, which computes the triangles normal
+// Triangle constructor, which computes the triangles normal. Vertex
+// normals are the same as the face normals
 Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
     Renderable(material_), A(A_), B(B_), C(C_) {
 
@@ -114,6 +119,7 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
         this->bounding_box = buildBoundingBox();
 };
 
+// Builds the AABB for this triangle
 AABB* Triangle::buildBoundingBox() {
 
         Vector2f spreads[3];

@@ -63,6 +63,10 @@ class Renderable {
 
 };
 
+/*
+ * An axis aligned bounding box. As a renderable, 
+ * objects AABB's can also be drawn, mainly for debugging purposes
+ */
 class AABB : public Renderable {
 
     public:
@@ -73,12 +77,17 @@ class AABB : public Renderable {
         Vector3f maxs;
         bool valid;
 
+        // Checks if a ray intersects this AABB
         IntersectData intersects(Ray r);
+
+        // Builds an AABB for this AABB.
         AABB* buildBoundingBox();
 
         void merge(AABB* other);
 
+        // Invalid, empty AABB
         AABB();
+        // Builds a valid AABB at the given location with the given size
         AABB(Vector3f center_, Vector3f dimensions_, Material m);
 
 };

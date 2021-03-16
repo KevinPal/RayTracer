@@ -4,13 +4,15 @@
 #include <algorithm>
 #include "renderable.h"
 
-
+// Default renderable constructor, does not have a bounding box
 Renderable::Renderable() : bounding_box(NULL) {}
 
+// Renderable with known material, does not have a bounding box
 Renderable::Renderable(Material m) :
    bounding_box(NULL),  material(m) { }
 
-
+// On deconstruction of renderable, also delete the bounding box 
+// if it exsits
 Renderable::~Renderable() {
     printf("Destructing Renderable\n");
     if(this->bounding_box && (this->bounding_box != this)) {
@@ -18,12 +20,13 @@ Renderable::~Renderable() {
     }
 }
 
-
+// Default AABB, set as invalid
 AABB::AABB() :
     valid(false) {
     this->bounding_box = buildBoundingBox();
 }
 
+// Generic AABB located at a point with given dimensions
 AABB::AABB(Vector3f center_, Vector3f dimensions_, Material m) :
     Renderable(m), valid(true), center(center_), dimensions(dimensions_) {
    
@@ -32,6 +35,7 @@ AABB::AABB(Vector3f center_, Vector3f dimensions_, Material m) :
     this->maxs = center + dimensions_ / 2.0;
 }
 
+// The AABB of an AABB is its self
 AABB* AABB::buildBoundingBox() {
     return this;
 }
@@ -41,6 +45,10 @@ AABB* AABB::buildBoundingBox() {
  * from "Graphics Gems", Academic Press, 1990.
  * Source: https://web.archive.org/web/20090803054252/http://tog.acm.org/resources/GraphicsGems/gems/RayBox.c
  * 
+ * Only 3 sides of a plane can ever be visible from any angle. We find those
+ * 3 planes, and do comparisons against those. Checks common cases first, such
+ * as the ray being inside the box, or the ray completely pointing the wrong way,
+ * before handling the more intensive cases
 */
 IntersectData AABB::intersects(Ray ray) {
     bool inside = true;
@@ -121,6 +129,11 @@ IntersectData AABB::intersects(Ray ray) {
     return out;
 }
 
+/*
+ * Merges another AABB into this one. Based on the valididty of either
+ * AABB, this AABB could be unchanged, equivelent to the other AABB,
+ * or a new AABB that can contain both AABBs.
+ */
 void AABB::merge(AABB* other) {
     //printf("merging this: %d other: %d \n", valid, other.valid);
     if(!other->valid && valid) {

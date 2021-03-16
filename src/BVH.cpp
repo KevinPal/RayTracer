@@ -7,8 +7,14 @@
 #include <stdio.h>
 #include <cassert>
 
-#define DO_BVH 1
+#define DO_BVH 0
 
+/*
+ * Checks if a ray intersects this BVH Node. Will
+ * recusively check left and right children if the 
+ * ray intersects their AABBs, otherwise will
+ * defer to the underlying mesh's intersection methods
+ */
 IntersectData BVHNode::intersects(Ray r) {
 
     if(!DO_BVH) {
@@ -76,6 +82,14 @@ IntersectData BVHNode::intersects(Ray r) {
     }
 }
 
+/*
+ * Partitions this BVHS. Attemps to splits the underlying mesh
+ * into two meshes along the axis with the greatest spread,
+ * then partitions based on the median. Stops partitioning
+ * if the underlying mesh has less than left_size elements, 
+ * or if partitioning is meaningless (i.e all elements in the
+ * same spot). Recursively handles the new BVHNodes
+ */
 void BVHNode::partition() {
 
     // If the underlying mesh doesnt have an AABB yet, build it
