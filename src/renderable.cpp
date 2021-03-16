@@ -12,7 +12,7 @@ Renderable::Renderable(Material m) :
 
 
 Renderable::~Renderable() {
-    printf("Desutring\n");
+    printf("Destructing Renderable\n");
     if(this->bounding_box && (this->bounding_box != this)) {
         delete this->bounding_box;
     }
@@ -21,10 +21,8 @@ Renderable::~Renderable() {
 
 AABB::AABB() :
     valid(false) {
-    
-    this->bounding_box = this;
+    this->bounding_box = buildBoundingBox();
 }
-
 
 AABB::AABB(Vector3f center_, Vector3f dimensions_, Material m) :
     Renderable(m), valid(true), center(center_), dimensions(dimensions_) {
@@ -32,6 +30,10 @@ AABB::AABB(Vector3f center_, Vector3f dimensions_, Material m) :
     this->bounding_box = this;
     this->mins = center - dimensions_ / 2.0;
     this->maxs = center + dimensions_ / 2.0;
+}
+
+AABB* AABB::buildBoundingBox() {
+    return this;
 }
 
 /* 

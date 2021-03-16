@@ -2,8 +2,16 @@
 #include "mesh.h"
 #include "renderable.h"
 #include "vector.h"
+#include "primitives.h"
+
 #include <stdio.h>
 #include <math.h>
+#include <string>
+#include <cstring>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <cassert>
 
 Mesh::Mesh()
  : Renderable(Color()) {
@@ -25,6 +33,7 @@ IntersectData Mesh::intersects(Ray ray) {
     bool hit = false;
     IntersectData min_hit;
     min_hit.t = nan("");
+    //printf("Running general intersection on size: %d\n", objects.size() + large_objects.size());
     for(Renderable* r : objects) {
 
         IntersectData data = r->intersects(ray);
@@ -52,6 +61,7 @@ IntersectData Mesh::intersects_large(Ray ray) {
     IntersectData min_hit;
     min_hit.t = nan("");
 
+    //printf("Running large intersection on size: %d\n", large_objects.size());
     for(Renderable* r : large_objects) {
 
         IntersectData data = r->intersects(ray);
@@ -74,8 +84,8 @@ inline bool instanceof(const T*) {
 void Mesh::addObject(Renderable* obj) {
 
     // If it has no bounding box but it is a mesh, build the box
-    if(!obj->bounding_box && instanceof<Mesh>(obj)) {
-        ((Mesh*) obj)->buildBoundingBox();
+    if(!obj->bounding_box) {
+        obj->bounding_box = obj->buildBoundingBox();
     }
 
     if(obj->bounding_box) {
@@ -86,13 +96,97 @@ void Mesh::addObject(Renderable* obj) {
     }
 }
 
-void Mesh::buildBoundingBox(void) {
+AABB* Mesh::buildBoundingBox(void) {
 
     for(Renderable* r : this->objects) {
         if(r->bounding_box) {
             this->bounding_box->merge(r->bounding_box);
         }
     }
+
+    return this->bounding_box;
 }
 
+void Mesh::fromOBJ(std::string path) {
+    std::vector<Vector3f> verticies;
+    std::vector<Vector3f> faces;
 
+    std::ifstream infile(path, std::ios_base::in);
+    assert(infile.is_open());
+    std::string line;
+
+    char c;
+    float f1, f2, f3;
+
+    // Read data from file into faces and verticies arrays
+    while(std::getline(infile, line)) {
+        std::istringstream ss(line);
+
+        if(!(ss >> c >> f1 >> f2 >> f3)) {
+            assert(false);
+        }  else {
+            if(c == 'v') {
+                Vector3f data(f1, f2, f3 * -1);
+                verticies.push_back(data);
+            } else if(c == 'f') {
+                Vector3f data(f1, f2, f3);
+                faces.push_back(data);
+            }
+        }
+    }
+
+    Vector3f face_norms[faces.size()];
+    float face_norm_size[faces.size()];
+
+    // Calculate per face normals
+    for(int i = 0; i < faces.size(); i++) {
+
+        Vector3f& v0 = verticies[faces[i][0] - 1];
+        Vector3f& v1 = verticies[faces[i][1] - 1];
+        Vector3f& v2 = verticies[faces[i][2] - 1];
+
+        face_norms[i] = (v1 - v0).cross(v2 - v0);
+        face_norm_size[i] = face_norms[i].length();
+    }
+
+    // Sum up normals per vertex
+    Vector3f vertex_norms[verticies.size()];
+
+    float vertex_norm_size[verticies.size()];
+    memset(vertex_norm_size, 0, verticies.size() * sizeof(float));
+
+    // Sum up normals per vertex and face areas
+    for(int i = 0; i < faces.size(); i++) {
+        for(int j = 0; j < 3; j++) {
+            int vert_index = faces[i][j] - 1;
+            vertex_norms[vert_index] = vertex_norms[vert_index] + face_norms[i] * face_norm_size[i];
+            vertex_norm_size[vert_index] += face_norm_size[i];
+        }
+    }
+
+    // Weight each normal according to area
+    for(int i = 0; i < verticies.size(); i++) {
+        vertex_norms[i] = vertex_norms[i] / vertex_norm_size[i];
+        vertex_norms[i].print();
+    }
+
+    // Make triangles and push into mesh
+    for(int i = 0; i < faces.size(); i++) {
+
+        int v1 = (int) faces[i][0] - 1;
+        int v2 = (int) faces[i][1] - 1;
+        int v3 = (int) faces[i][2] - 1;
+
+        Triangle* t = new Triangle(
+            verticies[v1],
+            verticies[v2],
+            verticies[v3],
+            vertex_norms[v1],
+            vertex_norms[v2],
+            vertex_norms[v3],
+            this->material
+        );
+        addObject(t);
+    }
+
+}

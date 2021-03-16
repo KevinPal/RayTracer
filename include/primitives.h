@@ -19,6 +19,7 @@ class Plane : public Renderable {
 
         // Checks if a ray intersects this plane
         IntersectData intersects(Ray r) override;
+        AABB* buildBoundingBox() override;
 };
 
 /*
@@ -35,6 +36,7 @@ class Sphere : public Renderable {
         Sphere(Vector3f point, float radius, Material material);
 
         IntersectData intersects(Ray r) override;
+        AABB* buildBoundingBox() override;
 };
 
 /*
@@ -43,19 +45,29 @@ class Sphere : public Renderable {
 class Triangle : public Renderable {
 
     public:
-        Vector3f normal;
-
         Vector3f A;
         Vector3f B;
         Vector3f C;
 
+        Vector3f A_normal;
+        Vector3f B_normal;
+        Vector3f C_normal;
+
+        Vector3f normal;
+
         // Default constructor that just sets all 3 points to 0, 0, 0
         Triangle() {};
-        // Specifies all 3 coordinates of the trinalge
+        // Specifies all 3 coordinates of the trinalge. Normal will be calculated
         Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material);
+
+        // Specifies all 3 coordinates of the trinalge and normals
+        Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
+                Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_,
+                Material material);
 
         // Tests of a ray intersects this trinagle
         IntersectData intersects(Ray r);
+        AABB* buildBoundingBox() override;
 
 };
 
@@ -74,6 +86,7 @@ class Prism : public Mesh {
         // Defines a prism based on how to go "up" and "right". The 3rd vector is perpendicular
         // to both of these
         Prism(Vector3f center_, Vector3f up_, Vector3f right_, Vector3f dimensions_, Material material);
+        ~Prism();
 
         Triangle* triangles[12];
 

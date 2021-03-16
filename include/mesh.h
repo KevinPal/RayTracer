@@ -2,6 +2,7 @@
 #define MESH_H
 
 #include "renderable.h"
+#include <string>
 
 #include <vector>
 
@@ -39,7 +40,9 @@ class Mesh : public Renderable {
         // Adds a renderable to this mesh
         void addObject(Renderable* obj);
 
-        void buildBoundingBox(void);
+        AABB* buildBoundingBox(void);
+
+        void fromOBJ(std::string path);
 };
 
 

@@ -25,18 +25,24 @@ IntersectData Plane::intersects(Ray r) {
     return out;
 }
 
+AABB* Plane::buildBoundingBox() {return NULL; }
+
 // Sphere constructor
 Sphere::Sphere(Vector3f center_, float radius_, Material material_) :
     Renderable(material_), 
     center(center_), radius(radius_) {
 
-    this->bounding_box = new AABB{
-        center_,
-        Vector3f(radius_ * 2, radius_ * 2, radius_ * 2),
-        material_
-    };
-    
+    this->bounding_box = this->buildBoundingBox();
 };
+
+AABB* Sphere::buildBoundingBox() {
+    return new AABB{
+        center,
+        Vector3f(radius * 2, radius * 2, radius * 2),
+        material
+    };
+
+}
 
 // Math based off of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 // Tests if ray intersects sphere, and calculates normal if so
@@ -79,6 +85,18 @@ IntersectData Sphere::intersects(Ray r) {
     return out;
 }
 
+Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
+        Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_, Material material_) :
+    Renderable(material_), A(A_), B(B_), C(C_), 
+    A_normal(A_normal_), B_normal(B_normal_), C_normal(C_normal_){
+
+    Vector3f v1 = A - B;
+    Vector3f v2 = C - B;
+    normal = v1.cross(v2);
+
+
+}
+
 
 // Triangle constructor, which computes the triangles normal
 Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
@@ -88,28 +106,36 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
         Vector3f v1 = A - B;
         Vector3f v2 = C - B;
 
-        normal = v1.cross(v2).normalize();
+        normal = v1.cross(v2);
+        A_normal = normal;
+        B_normal = normal;
+        C_normal = normal;
+
+        this->bounding_box = buildBoundingBox();
+};
+
+AABB* Triangle::buildBoundingBox() {
 
         Vector2f spreads[3];
-        spreads[0].x = spreads[0].y = A_.x;
-        spreads[1].x = spreads[1].y = A_.y;
-        spreads[2].x = spreads[2].y = A_.z;
+        spreads[0].x = spreads[0].y = A.x;
+        spreads[1].x = spreads[1].y = A.y;
+        spreads[2].x = spreads[2].y = A.z;
 
-        spreads[0].x = std::min(spreads[0].x, B_.x);
-        spreads[0].y = std::max(spreads[0].y, B_.x);
-        spreads[1].x = std::min(spreads[1].x, B_.y);
-        spreads[1].y = std::max(spreads[1].y, B_.y);
-        spreads[2].x = std::min(spreads[2].x, B_.z);
-        spreads[2].y = std::max(spreads[2].y, B_.z);
+        spreads[0].x = std::min(spreads[0].x, B.x);
+        spreads[0].y = std::max(spreads[0].y, B.x);
+        spreads[1].x = std::min(spreads[1].x, B.y);
+        spreads[1].y = std::max(spreads[1].y, B.y);
+        spreads[2].x = std::min(spreads[2].x, B.z);
+        spreads[2].y = std::max(spreads[2].y, B.z);
 
-        spreads[0].x = std::min(spreads[0].x, C_.x);
-        spreads[0].y = std::max(spreads[0].y, C_.x);
-        spreads[1].x = std::min(spreads[1].x, C_.y);
-        spreads[1].y = std::max(spreads[1].y, C_.y);
-        spreads[2].x = std::min(spreads[2].x, C_.z);
-        spreads[2].y = std::max(spreads[2].y, C_.z);
+        spreads[0].x = std::min(spreads[0].x, C.x);
+        spreads[0].y = std::max(spreads[0].y, C.x);
+        spreads[1].x = std::min(spreads[1].x, C.y);
+        spreads[1].y = std::max(spreads[1].y, C.y);
+        spreads[2].x = std::min(spreads[2].x, C.z);
+        spreads[2].y = std::max(spreads[2].y, C.z);
 
-        this->bounding_box = new AABB(
+        return  new AABB(
             Vector3f(
                 (spreads[0].y + spreads[0].x) / 2.0,
                 (spreads[1].y + spreads[1].x) / 2.0,
@@ -120,20 +146,20 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
                 (spreads[1].y - spreads[1].x),
                 (spreads[2].y - spreads[2].x)
             ),
-            material_
+            material
         );
 
-
-};
+}
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
-// TODO make this use barycentric coords
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
 IntersectData Triangle::intersects(Ray r) {
 
     float d = normal.dot(r.direction);
     IntersectData out;
     out.t = nan("");
     out.normal = normal;
+    out.normal.normalize();
     out.material = material;
     if(d == 0) { // Paralell case
         return out;
@@ -143,19 +169,33 @@ IntersectData Triangle::intersects(Ray r) {
             return out;
         } else {
 
+            // Compute barycentric
             Vector3f P = r.getPoint(t);
 
             Vector3f edge0 = B - A;
             Vector3f edge1 = C - B;
             Vector3f edge2 = A - C;
-            Vector3f C0 = P - A;
-            Vector3f C1 = P - B;
-            Vector3f C2 = P - C;
 
-            if (normal.dot(edge0.cross(C0)) <= 0 &&
-                normal.dot(edge1.cross(C1)) <= 0 &&
-                normal.dot(edge2.cross(C2)) <= 0) {
+            Vector3f VP0 = P - A;
+            Vector3f VP1 = P - B;
+            Vector3f VP2 = P - C;
+
+            Vector3f C0 = edge0.cross(VP0);
+            Vector3f C1 = edge1.cross(VP1);
+            Vector3f C2 = edge2.cross(VP2);
+
+            float area = normal.length() / 2;
+            float u = (C0.length() / 2) / area;
+            float v = (C1.length() / 2) / area;
+            float w = (C2.length() / 2) / area;
+
+
+            if (normal.dot(C0) <= 0 &&
+                normal.dot(C1) <= 0 &&
+                normal.dot(C2) <= 0) {
                 out.t = t;
+                out.normal = A_normal * v + B_normal * w + C_normal * u;
+                out.normal.normalize();
                 return out;
             } else {
                 return out;
@@ -211,8 +251,11 @@ Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
         objects.push_back(triangles[i]);
     }
 
-    this->buildBoundingBox();
+    this->bounding_box = this->buildBoundingBox();
 
-    
+}
 
+Prism::~Prism() {
+    for(Renderable* r : objects)
+        delete r;
 }

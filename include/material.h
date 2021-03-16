@@ -18,11 +18,11 @@ class Material {
 
         // Basic fully black color
         Material() :
-            color(Color()), alpha(1), diffuse(1), specular(1) {}
+            color(Color()), alpha(1), diffuse(1), specular(0) {}
 
         // Opaque, nonreflective color
         Material(Color c) :
-            color(c), alpha(1), diffuse(1), specular(1) {};
+            color(c), alpha(1), diffuse(1), specular(0) {};
 
         // Generic color with specified color, transperncy, and reflectiveness
         Material(Color c, float alpha_, float diffuse_, float specular_) :

@@ -57,6 +57,8 @@ class Renderable {
 
         // Method to test if a ray intersects this ibject
         virtual IntersectData intersects(Ray r) = 0;
+
+        virtual AABB* buildBoundingBox() = 0;
         virtual ~Renderable();
 
 };
@@ -72,6 +74,8 @@ class AABB : public Renderable {
         bool valid;
 
         IntersectData intersects(Ray r);
+        AABB* buildBoundingBox();
+
         void merge(AABB* other);
 
         AABB();

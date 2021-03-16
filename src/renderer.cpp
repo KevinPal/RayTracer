@@ -7,9 +7,13 @@
 #include <math.h>
 #include <cassert>
 #include <math.h>
+#include <cmath>
 #include <stack>
 
 #define CLAMP(X, A, B) ((X) < (A) ? (A) : ((X) > (B) ? (B) : (X)))
+
+#define DO_ALPHA 0
+#define DO_SPEC 1
 
 
 // The bulk of the rendering code is here for now, but will
@@ -17,7 +21,7 @@
 IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
 
     // We hard code a single light position for now
-    Vector3f light(10, 10, -15);
+    Vector3f light(10, 10, -20);
     float l_int = 10.0;
 
     // Test if the ray hits anything in the scene
@@ -29,7 +33,6 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
         Vector3f hit_pos = ray.getPoint(min_hit.t);
         float spec = min_hit.material.specular;
 
-
         // 
         // transperency support. Everytime the ray hits something,
         // we move it slightly forward and send the ray out again, until
@@ -37,58 +40,63 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
         // these colors backwards according to their alphas to get the final
         // color
         //
-        std::stack<Material> alpha_stack;
-        Ray alpha_ray;
-        alpha_ray.direction = ray.direction;
-        alpha_ray.origin = hit_pos;
+        if(DO_ALPHA) {
+            std::stack<Material> alpha_stack;
+            Ray alpha_ray;
+            alpha_ray.direction = ray.direction;
+            alpha_ray.origin = hit_pos;
 
-        alpha_stack.push(min_hit.material);
+            alpha_stack.push(min_hit.material);
 
-        // Repededly move the ray forward and retest
-        while(alpha_stack.top().alpha != 1) {
-            alpha_ray.origin = alpha_ray.getPoint(1e-4);
-            //IntersectData alpha_data = scene->intersects(alpha_ray);
-            IntersectData alpha_data = renderRay(alpha_ray, scene, depth - 1);
+            // Repededly move the ray forward and retest
+            while(alpha_stack.top().alpha != 1) {
+                alpha_ray.origin = alpha_ray.getPoint(1e-4);
+                //IntersectData alpha_data = scene->intersects(alpha_ray);
+                IntersectData alpha_data = renderRay(alpha_ray, scene, depth - 1);
 
-            if(alpha_data.t != nan("") && (alpha_data.t >= 0)) {
-                alpha_stack.push(alpha_data.material);
-                alpha_ray.origin = alpha_ray.getPoint(alpha_data.t);
-            } else {
-                break;
+                if(alpha_data.t != nan("") && (alpha_data.t >= 0)) {
+                    alpha_stack.push(alpha_data.material);
+                    alpha_ray.origin = alpha_ray.getPoint(alpha_data.t);
+                } else {
+                    break;
+                }
+            }
+
+            // Process the colors in revere and blend the colors together
+            min_hit.material = alpha_stack.top();
+            alpha_stack.pop();
+            while(!alpha_stack.empty()) {
+                Material mix_color = alpha_stack.top();
+
+                min_hit.material.color = (mix_color.color * (mix_color.alpha)) + (min_hit.material.color * (1 - mix_color.alpha));
+                alpha_stack.pop();
             }
         }
-
-        // Process the colors in revere and blend the colors together
-        min_hit.material = alpha_stack.top();
-        alpha_stack.pop();
-        while(!alpha_stack.empty()) {
-            Material mix_color = alpha_stack.top();
-
-            min_hit.material.color = (mix_color.color * (mix_color.alpha)) + (min_hit.material.color * (1 - mix_color.alpha));
-            alpha_stack.pop();
-        }
+        
 
         //
         // Recursive reflection support. Light gets bounced across the normal if the material is reflective,
         // and gets recursively processed
         //
-        if((spec > 0) && (depth > 0)) {
-            Ray reflection_ray;
-            reflection_ray.origin = hit_pos;
-            reflection_ray.direction = (min_hit.normal * 2 * ray.direction.dot(min_hit.normal) - ray.direction) * -1;
+        if(DO_SPEC) {
+            if((spec > 0) && (depth > 0)) {
+                Ray reflection_ray;
+                reflection_ray.origin = hit_pos;
+                reflection_ray.direction = (min_hit.normal * 2 * ray.direction.dot(min_hit.normal) - ray.direction) * -1;
 
-            reflection_ray.origin = reflection_ray.getPoint(1e-4);
-            //IntersectData reflection_data = scene->intersects(reflection_ray);
-            IntersectData reflection_data = renderRay(reflection_ray, scene, depth-1);
+                reflection_ray.origin = reflection_ray.getPoint(1e-4);
+                //IntersectData reflection_data = scene->intersects(reflection_ray);
+                IntersectData reflection_data = renderRay(reflection_ray, scene, depth-1);
 
-            if(reflection_data.t != nan("") && (reflection_data.t >= 0)) {
-                min_hit.material.color = (min_hit.material.color * (1-spec)) + (reflection_data.material.color * spec);
+                if(reflection_data.t != nan("") && (reflection_data.t >= 0)) {
+                    min_hit.material.color = (min_hit.material.color * (1-spec)) + (reflection_data.material.color * spec);
+                }
             }
         }
 
         // 
         // Shadow and shading. We check if the shadow ray has a direct path to
-        // the light. If so, we shadw acording to phong model with no specular
+        // the light. If so, we shadw acording to phong model
         // Otherwise, we blacken the color to represent some ambient light
         //
 
@@ -104,7 +112,18 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
             float list_dist = (light - hit_pos).length();
             Vector3f light_ray = (light - hit_pos).normalize();
             float light_factor =  sqrt(abs(min_hit.normal.dot(light_ray)));
-            min_hit.material.color = min_hit.material.color / 2 + (Vector3f(1, 1, 1) * CLAMP(light_factor / (list_dist) * l_int , 0, 1));
+
+            Vector3f light_bounce = min_hit.normal * light_ray.dot(min_hit.normal) * 2 - light_ray;
+
+            Vector3f cAmbient = min_hit.material.color;
+            Vector3f cDiffuse = Vector3f(1, 1, 1);
+            Vector3f cSpecular = Vector3f(1, 1, 1);
+
+            float kAmbient = 0.5;
+            float kDiffuse = CLAMP(light_factor / (list_dist) * l_int , 0, 1);
+            float kSpecular = pow(light_bounce.dot(ray.direction), 100);
+
+            min_hit.material.color = cAmbient * kAmbient + cDiffuse * kDiffuse + cSpecular * kSpecular;
         }
 
         min_hit.material.color.clamp();

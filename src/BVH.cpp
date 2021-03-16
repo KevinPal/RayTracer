@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <cassert>
 
-#define DO_BVH 0
+#define DO_BVH 1
 
 IntersectData BVHNode::intersects(Ray r) {
 
@@ -57,7 +57,7 @@ IntersectData BVHNode::intersects(Ray r) {
                             return right_inter;
                         }
                     } else {
-                        return Mesh::intersects(r);
+                        return Mesh::intersects_large(r);
                     }
                 }
             }
@@ -84,7 +84,7 @@ void BVHNode::partition() {
     }
 
     // Base cases
-    if(this->objects.size() <= this->leaf_size) {
+    if(this->objects.size() < this->leaf_size) {
         return;
     }
 
@@ -98,6 +98,8 @@ void BVHNode::partition() {
             axis = dim;
         }
     }
+    
+    printf("Splitting on %d with size %f\n", axis, last_size);
 
     // Use nthstort to partition based on median
     std::nth_element(objects.begin(), objects.begin() + objects.size()/2, objects.end(),
@@ -115,21 +117,32 @@ void BVHNode::partition() {
     this->left = new BVHNode(leaf_size);
     this->right = new BVHNode(leaf_size);
 
+
     for(Renderable* r : objects) {
-        if(r->bounding_box->center[axis] < median) {
+        if(r->bounding_box->center[axis] <= median) {
             this->left->addObject(r);
         } else {
             this->right->addObject(r);
         }
     }
 
-    printf("Left size: %d right size: %d\n", static_cast<BVHNode*>(this->left)->objects.size(), static_cast<BVHNode*>(this->right)->objects.size());
+    // Unable to properly partiton. Just make this a leaf node
+    if(static_cast<BVHNode*>(this->left)->objects.size() == 0 || static_cast<BVHNode*>(this->right)->objects.size() == 0) {
+        delete this->left;
+        delete this->right;
 
-    ((BVHNode*) (this->left ))->large_objects.assign(this->large_objects.begin(), this->large_objects.end());
-    ((BVHNode*) (this->right))->large_objects.assign(this->large_objects.begin(), this->large_objects.end());
+        this->left = NULL;
+        this->right = NULL;
+        printf("Forcing leaf\n");
+    } else {
+        printf("Left size: %d right size: %d\n", static_cast<BVHNode*>(this->left)->objects.size(), static_cast<BVHNode*>(this->right)->objects.size());
 
-    // Recurse
-    ((BVHNode*) (this->left ))->partition();
-    ((BVHNode*) (this->right))->partition();
+        ((BVHNode*) (this->left ))->large_objects.assign(this->large_objects.begin(), this->large_objects.end());
+        ((BVHNode*) (this->right))->large_objects.assign(this->large_objects.begin(), this->large_objects.end());
+
+        // Recurse
+        ((BVHNode*) (this->left ))->partition();
+        ((BVHNode*) (this->right))->partition();
+    }
 
 }
