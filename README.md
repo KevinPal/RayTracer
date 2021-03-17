@@ -31,15 +31,15 @@ Times are in seconds
 | 100	       | 1.026	        | 3.165	           | 3.084   |
 | 1,000	       | 5.037	        | 55.332	       | 10.985  |
 | 10,000	   | 14.061	        | 677.023	       | 48.148  |
-| 100,000	   | 31.053         | 6638.986         | 6638.986|
+| 100,000	   | 31.053         | 6638.986         | 213.795 |
 | 1,000,000	   | 78.64	        | NA               | NA      |
 
 1,000 Spheres:  
-![1K Spheres](images/mp2/spheres_1000.png)
+![1K Spheres](images/mp2/spheres_1000.png)  
 10,000 Spheres:  
-![10K Spheres](images/mp2/spheres_10000.png)
+![10K Spheres](images/mp2/spheres_10000.png)  
 100,000 Spheres:  
-![100K Spheres](images/mp2/spheres_100000.png)
+![100K Spheres](images/mp2/spheres_100000.png)  
 
 Finally, a mesh with with 100,000 consisting of 50,000 vertices was rendered. 25 sub samples
 were made per pixel, and there was a maximum reflection depth of 3.
