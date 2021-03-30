@@ -2,6 +2,8 @@
 #define MATERIAL_H
 
 #include "color.h"
+#include "vector.h"
+#include "ray.h"
 
 
 /* Represents a material. This class is not fully acurate yet,
@@ -11,27 +13,26 @@
  */
 class Material {
     public:
-        Color color;
-        float alpha;
-        float diffuse; // unused
-        float specular;
 
-        // Basic fully black color
-        Material() :
-            color(Color()), alpha(1), diffuse(1), specular(0) {}
+        Color albedo;
+        Color emission;
 
-        // Opaque, nonreflective color
-        Material(Color c) :
-            color(c), alpha(1), diffuse(1), specular(0) {};
+        virtual float BRDF(Ray& in, Ray& out, Vector3f& normal) = 0;
+        virtual float scatterRay(Ray& in, Vector3f& normal) = 0;
 
-        // Generic color with specified color, transperncy, and reflectiveness
-        Material(Color c, float alpha_, float diffuse_, float specular_) :
-            color(c), alpha(alpha_), diffuse(diffuse_), specular(specular_) {};
+        Material() : Material(Vector3f()) {}
 
-        // Copy constructor
-        Material(const Material& other) :
-            color(other.color), alpha(other.alpha), diffuse(other.diffuse), specular(other.specular) {};
+        Material(Color albedo_): Material(albedo_, Vector3f()) {}
+
+        Material(Color albedo_, Color emission_): albedo(albedo_), emission(emission_) {}
 
 };
+
+class DiffuseMaterial : public Material {
+
+    virtual float BRDF(Ray& in, Ray& out, Vector3f& normal) override;
+    virtual Ray scatterRay(Ray& in, Vector3f& normal) override;
+
+}
 
 #endif

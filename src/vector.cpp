@@ -3,6 +3,8 @@
 #include <math.h>
 #include <stdio.h>
 
+#define RAND_RANGE(MIN, MAX) ((MIN) + ((float) rand()) /((float)(RAND_MAX/((MAX)-(MIN)))))
+
 // Vector 2f
 
 // Copy constructor for vec2 -> vec2
@@ -92,6 +94,10 @@ Vector3f::Vector3f(float x_, float y_):
 
 Vector3f::Vector3f(float x_, float y_, float z_) :
     x(x_), y(y_), z(z_) {}
+
+float Vector3f::length2() const {
+    return x * x + y * y + z * z;
+}
 
 float Vector3f::length() const {
     return sqrt(x * x + y * y + z * z);
@@ -185,6 +191,22 @@ bool Vector3f::isClose(const Vector3f& other, float epsilon) const {
                 (abs(z - other.z) <= epsilon);
 }
 
+float Vector3f::angleCos(const Vector3f& other) const {
+    return (this->dot(other)) / (this->length() * other.length());
+}
+
 void Vector3f::print(void) const {
     printf("<%f %f %f>\n", x, y, z);
+}
+
+Vector3f Vector3f::randomVect(float min, float max) {
+    return Vector3f(RAND_RANGE(min, max), RAND_RANGE(min, max), RAND_RANGE(min, max));
+}
+
+Vector3f Vector3f::randomSphere() {
+    while (true) {
+        Vector3f out = Vector3f::randomVect(-1,1);
+        if (out.length2() >= 1) continue;
+        return out;
+    }
 }

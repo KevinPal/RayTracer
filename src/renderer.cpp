@@ -12,10 +12,68 @@
 
 #define CLAMP(X, A, B) ((X) < (A) ? (A) : ((X) > (B) ? (B) : (X)))
 
-#define DO_ALPHA 0
+#define DO_ALPHA 1
 #define DO_SPEC 1
 
 
+Color renderRay(Ray ray, Mesh* scene, int depth) {
+
+    // We hard code a single light position for now
+    Vector3f light(10, 10, -20);
+    float l_int = 10.0;
+
+    // Test if the ray hits anything in the scene
+    bool hit = false;
+    IntersectData min_hit = scene->intersects(ray);
+    Vector3f hit_pos = ray.getPoint(min_hit.t);
+    hit = (min_hit.t >= 0);
+
+    if(!hit)
+        return Color(0.0, 0.0, 0.0);
+    if(depth <= 1) {
+        return min_hit.material.emission;
+    } else {
+        Color base = min_hit.material.emission;
+        Color rec_color = Color(0, 0, 0);
+
+        float weighting = 0;
+        int samples = 10;
+
+        for(int i = 0; i < samples; i++) {
+
+            Vector3f hit_norm = min_hit.normal;
+            float angleCos = hit_norm.angleCos(ray.direction);
+            if(0 < angleCos && angleCos < 1) {
+                hit_norm = hit_norm * -1.0;
+            }
+
+            //Vector3f out_dir = hit_norm + Vector3f::randomSphere().norm();
+            Vector3f out_dir = (hit_norm + Vector3f::randomSphere().norm()).norm();
+
+            if(out_dir.isClose(Vector3f()))
+                out_dir = min_hit.normal;
+
+            Ray out_ray = Ray(hit_pos, out_dir);
+            out_ray.origin = out_ray.getPoint(1e-4);
+            //Ray out_ray = Ray(hit_pos, min_hit.normal);
+
+
+            Color base_rec_color = renderRay(out_ray, scene, depth-1);
+            float brdf = min_hit.material.BRDF(ray, out_ray, min_hit.normal);
+
+            rec_color = rec_color +  base_rec_color * brdf;
+            weighting += brdf;
+        }
+
+        rec_color  = rec_color / weighting;
+        rec_color = rec_color * min_hit.material.albedo + base;
+        rec_color = rec_color + min_hit.material.albedo * 0.1;
+        return rec_color;
+    }
+
+}
+
+/*
 // The bulk of the rendering code is here for now, but will
 // get moved as the lightning logic gets cleaned up
 IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
@@ -131,3 +189,4 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
 
     return min_hit;
 }
+*/

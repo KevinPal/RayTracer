@@ -62,8 +62,9 @@ class Vector3f {
         Vector3f(float x_, float y_);
         Vector3f(float x_, float y_, float z_);
 
-        // Gets the length of this vector
+        // Gets the length or squared length of this vector
         float length() const;
+        float length2() const;
         // Normalizes this vector
         Vector3f normalize();
         // Returns the normal of this vector. This vector is unchanged
@@ -95,8 +96,14 @@ class Vector3f {
         bool isClose(const Vector3f& other) const;
         bool isClose(const Vector3f& other, float epsilon) const;
 
+        float angleCos(const Vector3f& other) const;
+
         // Prints the vector to console
         void print(void) const;
+
+        // Random vector generation
+        static Vector3f randomVect(float min, float max);
+        static Vector3f randomSphere();
 };
 
 #endif

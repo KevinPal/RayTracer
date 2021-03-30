@@ -17,19 +17,17 @@
 #include <ctime>
 #include <chrono>
 
-#define DO_ANTI_ALIASING 0
+#define DO_ANTI_ALIASING 1
 #define ANTI_ALIASING_NUM 2
 
 #define BVH_LEAF_SIZE 2
-#define CAMERA_NUM 5
+#define CAMERA_NUM 2
 
 #define RAND ((float) (rand() / (float) RAND_MAX))
 
 using namespace std::chrono;
 
 int main (int argc, char **argv) {
-
-// 562.311000
 
     // Setup the display and get the buffer
     Display* display = Display::getInstance();
@@ -38,60 +36,89 @@ int main (int argc, char **argv) {
 
     BVHNode scene(BVH_LEAF_SIZE);
 
+    Material mat_blue = DiffuseMaterial(
+        Color(0.0, 0.0, 1.0)
+    );
+
+    Material mat_red = DiffuseMaterial(
+        Color(1.0, 0.0, 0.0)
+    );
+
+    Material mat_pink = DiffuseMaterial(
+        Color(1.0, 0.0, 1.0)
+    );
+
+    Material mat_cyan = DiffuseMaterial(
+        Color(1.0, 1.0, 0.0)
+    );
+    
+    Material mat_yellow = DiffuseMaterial(
+        Color(0.0, 1.0, 1.0)
+    );
+
+    Material mat_grey = DiffuseMaterial(
+        Color(0.5, 0.5, 0.5)
+    );
+
+    Material mat_light = DiffuseMaterial(
+        Color(0.0, 0.5, 0.5),
+        Color(1.0, 0.5, 0.5)
+    );
+
     Plane p(
+         Vector3f(0, 0, 15), // was 0 0 1 for dragon
          Vector3f(0, 0, 1),
-         Vector3f(0, 0, 1),
-         Material(Color(0.0f, 0.0f, 1.0f), 1, 0, 0.5));
+         mat_red);
 
     Plane p2(
          Vector3f(0, -0.5, 0),
          Vector3f(0, 1, 0),
-         Material(Color(1.0f, 0.0f, 0.0f), 1, 0, 0.75));
+         mat_blue);
 
-    /*
     Sphere s( 
          Vector3f(0, 5, 5), 
          5,
-         Material(Color(1.0f, 0.0f, 1.0f), 1, 0, 0));
+         mat_pink);
 
     Triangle t(
             Vector3f(-15, 10, 10),
             Vector3f(0, 20, 0),
             Vector3f(15, 10, 10),
-            Material(Color(1.0f, 1.0f, 0.0f), 1, 0, 1));
+            mat_cyan);
 
     Prism r(
             Vector3f(5, 0, -5),
             Vector3f(0, 1, 0),
             Vector3f(1, 0, 1),
             Vector3f(5, 10, 5),
-            Material(Color(0.0f, 1.0f, 1.0f), 0.25, 0, 0));
+            mat_light);
 
     Prism r2(
             Vector3f(-7, 1, -6),
             Vector3f(0, 1, 0),
             Vector3f(0, 1, 2),
             Vector3f(5, 5, 5),
-            Material(Color(.5f, .5f, .5f), 1, 0, 0));
+            mat_grey);
 
-    scene.addObject(&p);
-    scene.addObject(&p2);
     scene.addObject(&s);
     scene.addObject(&t);
     scene.addObject(&r);
     scene.addObject(&r2);
-    */
 
+    /*
     BVHNode m(5);
     m.material.color = Color(0.133, 0.745, 0.133);
+    m.material.alpha = 0;
     m.fromOBJ("./res/dragon.obj");
     m.partition();
+    */
 
 
     //scene.addObject(&p);
     //scene.addObject(&p2);
     //6638.986000
 
+    /*
     int num_spheres = 0;
     while(num_spheres < 100000) {
         float sx = RAND * 20 - 10;
@@ -112,12 +139,15 @@ int main (int argc, char **argv) {
         scene.addObject(s);
         num_spheres += 1;
     }
+    printf("Num spheres: %d\n", num_spheres);
+    */
 
-    //scene.addObject(&m);
+    scene.addObject(&p);
+    scene.addObject(&p2);
+   // scene.addObject(&m);
 
     //scene.addObject(m.bounding_box);
 
-    printf("Num spheres: %d\n", num_spheres);
 
     scene.partition();
 
@@ -200,16 +230,17 @@ int main (int argc, char **argv) {
 
         // If we have an anti aliaser, loop across all the rays from it, and do an intersection test
         // Otherwise just do it for the main ray
+        //
         if(DO_ANTI_ALIASING) {
             for(anti_aliaser = new GridAntiAliaser(&it, ANTI_ALIASING_NUM); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
-                IntersectData hit = renderRay(**anti_aliaser, &scene, 6);
+                Color hit_color = renderRay(**anti_aliaser, &scene, 2);
                 count += 1;
-                color = color + (hit.t >= 0 ? hit.material.color : bg);
+                color = color + hit_color;
             }
-        } else {
-            IntersectData hit = renderRay(ray, &scene, 4);
+        } else  {
+            Color hit_color = renderRay(ray, &scene, 3);
             count += 1;
-            color = color + (hit.t >= 0 ? hit.material.color : bg);
+            color = color + hit_color;
         }
 
         // Average the colors and write to the buffer

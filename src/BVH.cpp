@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <cassert>
 
-#define DO_BVH 0
+#define DO_BVH 1
 
 /*
  * Checks if a ray intersects this BVH Node. Will
