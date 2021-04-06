@@ -17,9 +17,10 @@ class BVHNode : public Mesh {
         int leaf_size;
 
         // Mesh constructors with added leaf size paramater. Defaults left and right to null
-        BVHNode(int leaf_size_) : left(NULL), right(NULL), leaf_size(leaf_size_) {}
-        BVHNode(int leaf_size_, std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end)
-            : Mesh(start, end), left(NULL), right(NULL), leaf_size(leaf_size_) {}
+        BVHNode(Material* material_, int leaf_size_) :
+            Mesh(material_), left(NULL), right(NULL), leaf_size(leaf_size_) {}
+        BVHNode(Material* material_, int leaf_size_, std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end)
+            : Mesh(material_, start, end), left(NULL), right(NULL), leaf_size(leaf_size_) {}
 
         // Check if a ray intersects this BVH
         IntersectData intersects(Ray r);

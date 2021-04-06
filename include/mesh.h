@@ -26,10 +26,10 @@ class Mesh : public Renderable {
         std::vector<Renderable*> large_objects;
 
         // Creates a empty mesh
-        Mesh();
+        Mesh(Material* material);
 
         // Creates a mesh from a given iterator
-        Mesh(std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end);
+        Mesh(Material* material, std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end);
 
         // Tests if a ray intersects any of the objects
         // in this mesh

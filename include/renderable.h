@@ -8,6 +8,9 @@
 #include <math.h>
 #include <stdio.h>
 
+class AABB;
+class Renderable;
+
 /*
  * Generic data that gets returned on a ray object intersection
  * Gets the paramateric t returned by the ray intersection,
@@ -19,23 +22,23 @@ class IntersectData {
         bool valid;
         float t;
         Vector3f normal;
-        Material material;
+        Material* material;
+        Renderable* object;
 
         // Default consturctor
-        IntersectData() : t(nan("")), valid(false) {}
+        IntersectData() : valid(false), t(nan("")), object(NULL) {}
 
         // General constructor
-        IntersectData(float t_, Vector3f norm_, Material m_):
-            valid(true), t(t_), normal(norm_), material(m_) {}
+        IntersectData(float t_, Vector3f norm_, Material* m_, Renderable* object_):
+            valid(true), t(t_), normal(norm_), material(m_), object(object_) {}
 
         // Copy consturctor
         IntersectData(const IntersectData& other) :
-            IntersectData(other.t, other.normal, other.material) {}
+            IntersectData(other.t, other.normal, other.material, other.object) {}
 
         bool did_hit() { return !std::isnan(t) && t >= 0; }
 };
 
-class AABB;
 
 /*
  * A generic object to be rendered. Subclasses need to
@@ -47,13 +50,13 @@ class AABB;
 class Renderable {
     public:
 
-        Material material;
+        Material* material;
         AABB* bounding_box;
 
         // A generic renderable only needs a known material
         // At the start, any surfaces bounding surface is its self
         Renderable();
-        Renderable(Material m);
+        Renderable(Material* m);
 
         // Method to test if a ray intersects this ibject
         virtual IntersectData intersects(Ray r) = 0;
@@ -88,7 +91,7 @@ class AABB : public Renderable {
         // Invalid, empty AABB
         AABB();
         // Builds a valid AABB at the given location with the given size
-        AABB(Vector3f center_, Vector3f dimensions_, Material m);
+        AABB(Vector3f center_, Vector3f dimensions_, Material* m);
 
 };
 

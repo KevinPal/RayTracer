@@ -17,7 +17,7 @@
 #include <ctime>
 #include <chrono>
 
-#define DO_ANTI_ALIASING 1
+#define DO_ANTI_ALIASING 0
 #define ANTI_ALIASING_NUM 2
 
 #define BVH_LEAF_SIZE 2
@@ -34,36 +34,43 @@ int main (int argc, char **argv) {
     display->init(500, 500);
     unsigned char* buf = display->getBuffer();
 
-    BVHNode scene(BVH_LEAF_SIZE);
-
-    Material mat_blue = DiffuseMaterial(
+    Material* mat_blue = new DiffuseMaterial(
         Color(0.0, 0.0, 1.0)
     );
 
-    Material mat_red = DiffuseMaterial(
+    Material* mat_red = new DiffuseMaterial(
         Color(1.0, 0.0, 0.0)
     );
 
-    Material mat_pink = DiffuseMaterial(
+    Material* mat_pink = new DiffuseMaterial(
         Color(1.0, 0.0, 1.0)
     );
 
-    Material mat_cyan = DiffuseMaterial(
+    Material* mat_cyan = new MirrorMaterial(
         Color(1.0, 1.0, 0.0)
     );
     
-    Material mat_yellow = DiffuseMaterial(
+    Material* mat_yellow = new DiffuseMaterial(
         Color(0.0, 1.0, 1.0)
     );
 
-    Material mat_grey = DiffuseMaterial(
+    Material* mat_grey = new DiffuseMaterial(
         Color(0.5, 0.5, 0.5)
     );
 
-    Material mat_light = DiffuseMaterial(
+    Material* mat_light = new DiffuseMaterial(
         Color(0.0, 0.5, 0.5),
         Color(1.0, 0.5, 0.5)
     );
+
+    Material* mat_forest_green = new DiffuseMaterial(
+        Color(0.133, 0.745, 0.133)
+    );
+
+
+    BVHNode scene(mat_pink, BVH_LEAF_SIZE);
+    BVHNode lighting(mat_pink, BVH_LEAF_SIZE);
+
 
     Plane p(
          Vector3f(0, 0, 15), // was 0 0 1 for dragon
@@ -78,7 +85,7 @@ int main (int argc, char **argv) {
     Sphere s( 
          Vector3f(0, 5, 5), 
          5,
-         mat_pink);
+         mat_light);
 
     Triangle t(
             Vector3f(-15, 10, 10),
@@ -91,7 +98,7 @@ int main (int argc, char **argv) {
             Vector3f(0, 1, 0),
             Vector3f(1, 0, 1),
             Vector3f(5, 10, 5),
-            mat_light);
+            mat_yellow);
 
     Prism r2(
             Vector3f(-7, 1, -6),
@@ -105,9 +112,10 @@ int main (int argc, char **argv) {
     scene.addObject(&r);
     scene.addObject(&r2);
 
+    lighting.addObject(&s);
+
     /*
     BVHNode m(5);
-    m.material.color = Color(0.133, 0.745, 0.133);
     m.material.alpha = 0;
     m.fromOBJ("./res/dragon.obj");
     m.partition();
@@ -233,12 +241,12 @@ int main (int argc, char **argv) {
         //
         if(DO_ANTI_ALIASING) {
             for(anti_aliaser = new GridAntiAliaser(&it, ANTI_ALIASING_NUM); !anti_aliaser->isDone(); ++(*anti_aliaser)) {
-                Color hit_color = renderRay(**anti_aliaser, &scene, 2);
+                Color hit_color = renderRay(**anti_aliaser, &scene, &lighting, 50);
                 count += 1;
                 color = color + hit_color;
             }
         } else  {
-            Color hit_color = renderRay(ray, &scene, 3);
+            Color hit_color = renderRay(ray, &scene, &lighting, 50);
             count += 1;
             color = color + hit_color;
         }

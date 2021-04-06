@@ -198,9 +198,12 @@ float Vector3f::angleCos(const Vector3f& other) const {
 void Vector3f::print(void) const {
     printf("<%f %f %f>\n", x, y, z);
 }
+Vector3f Vector3f::randomVect(float minX, float maxX, float minY, float maxY, float minZ, float maxZ) {
+    return Vector3f(RAND_RANGE(minX, maxX), RAND_RANGE(minY, maxY), RAND_RANGE(minZ, maxZ));
+}
 
 Vector3f Vector3f::randomVect(float min, float max) {
-    return Vector3f(RAND_RANGE(min, max), RAND_RANGE(min, max), RAND_RANGE(min, max));
+    return randomVect(min, max, min, max, min, max);
 }
 
 Vector3f Vector3f::randomSphere() {

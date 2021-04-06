@@ -16,7 +16,7 @@
 #define DO_SPEC 1
 
 
-Color renderRay(Ray ray, Mesh* scene, int depth) {
+Color renderRay(Ray ray, Mesh* scene, Mesh* lights, int depth) {
 
     // We hard code a single light position for now
     Vector3f light(10, 10, -20);
@@ -31,13 +31,15 @@ Color renderRay(Ray ray, Mesh* scene, int depth) {
     if(!hit)
         return Color(0.0, 0.0, 0.0);
     if(depth <= 1) {
-        return min_hit.material.emission;
+        return min_hit.material->emission;
     } else {
-        Color base = min_hit.material.emission;
+        Color base = min_hit.material->emission;
         Color rec_color = Color(0, 0, 0);
 
         float weighting = 0;
-        int samples = 10;
+        int samples = depth;
+
+        int light_samples = depth;
 
         for(int i = 0; i < samples; i++) {
 
@@ -48,7 +50,7 @@ Color renderRay(Ray ray, Mesh* scene, int depth) {
             }
 
             //Vector3f out_dir = hit_norm + Vector3f::randomSphere().norm();
-            Vector3f out_dir = (hit_norm + Vector3f::randomSphere().norm()).norm();
+            Vector3f out_dir = min_hit.material->scatterRay(ray.direction, hit_norm);
 
             if(out_dir.isClose(Vector3f()))
                 out_dir = min_hit.normal;
@@ -58,16 +60,40 @@ Color renderRay(Ray ray, Mesh* scene, int depth) {
             //Ray out_ray = Ray(hit_pos, min_hit.normal);
 
 
-            Color base_rec_color = renderRay(out_ray, scene, depth-1);
-            float brdf = min_hit.material.BRDF(ray, out_ray, min_hit.normal);
+            Color base_rec_color = renderRay(out_ray, scene, lights, (int) depth / 10);
+            float brdf = min_hit.material->BRDF(ray, out_ray, min_hit.normal);
 
             rec_color = rec_color +  base_rec_color * brdf;
             weighting += brdf;
         }
 
+        for(Renderable* light_obj : lights->objects) {
+            AABB* aabb = light_obj->bounding_box;
+            if(aabb) {
+                for(int i = 0; i < depth; i++) {
+                    Ray out_ray;
+                    Vector3f end_pos = Vector3f::randomVect(aabb->mins[0], aabb->maxs[0],
+                                                                 aabb->mins[1], aabb->maxs[1],
+                                                                 aabb->mins[2], aabb->maxs[2]);
+                    out_ray.fromPoints(hit_pos, end_pos);
+                    out_ray.direction.normalize();
+                    out_ray.origin = out_ray.getPoint(1e-4);
+
+                    IntersectData light_intersect = scene->intersects(out_ray);
+                    if(light_intersect.object == light_obj && light_intersect.t >= 0) {
+                        Color light_color = light_obj->material->emission;
+                        float brdf = min_hit.material->BRDF(ray, out_ray, min_hit.normal);
+
+                        rec_color = rec_color + light_color * brdf;
+                        weighting += brdf;
+                    }
+                }
+            }
+        }
+
         rec_color  = rec_color / weighting;
-        rec_color = rec_color * min_hit.material.albedo + base;
-        rec_color = rec_color + min_hit.material.albedo * 0.1;
+        rec_color = rec_color * min_hit.material->albedo + base;
+        rec_color = rec_color + min_hit.material->albedo * 0.1;
         return rec_color;
     }
 

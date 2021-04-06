@@ -102,6 +102,7 @@ class Vector3f {
         void print(void) const;
 
         // Random vector generation
+        static Vector3f randomVect(float minX, float maxX, float minY, float maxY, float minZ, float maxZ);
         static Vector3f randomVect(float min, float max);
         static Vector3f randomSphere();
 };

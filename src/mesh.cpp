@@ -14,16 +14,16 @@
 #include <cassert>
 
 // Default constructor for a mesh with an empty AABB
-Mesh::Mesh()
- : Renderable(Color()) {
+Mesh::Mesh(Material* material_)
+ : Renderable(material_) {
 
     this->bounding_box = new AABB();
 }
 
 // Creates a mesh from already existing renderables, where start is an iterator 
 // pointing to the start of elements to copy and end is the ending iterator to copy
-Mesh::Mesh(std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end)
-    : Renderable(Color()) { 
+Mesh::Mesh(Material* material_, std::vector<Renderable*>::iterator start, std::vector<Renderable*>::iterator end)
+    : Renderable(material_) { 
     
     this->bounding_box = new AABB();
     this->objects.assign(start, end);
@@ -43,6 +43,7 @@ IntersectData Mesh::intersects(Ray ray) {
         if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
             hit = true;
             min_hit = IntersectData(data);
+            min_hit.object = r;
         }
     }
 
@@ -52,6 +53,7 @@ IntersectData Mesh::intersects(Ray ray) {
         if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
             hit = true;
             min_hit = IntersectData(data);
+            min_hit.object = r;
         }
     }
 
@@ -72,6 +74,7 @@ IntersectData Mesh::intersects_large(Ray ray) {
         if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
             hit = true;
             min_hit = IntersectData(data);
+            min_hit.object = r;
         }
     }
 

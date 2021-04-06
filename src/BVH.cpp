@@ -128,8 +128,8 @@ void BVHNode::partition() {
     // Create left and right nodes
     //this->left = new BVHNode(leaf_size, objects.begin(), objects.begin() + objects.size()/2);
     //this->right = new BVHNode(leaf_size, objects.begin() + objects.size()/2, objects.end());
-    this->left = new BVHNode(leaf_size);
-    this->right = new BVHNode(leaf_size);
+    this->left = new BVHNode(this->material, leaf_size);
+    this->right = new BVHNode(this->material, leaf_size);
 
 
     for(Renderable* r : objects) {

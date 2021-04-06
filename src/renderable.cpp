@@ -8,7 +8,7 @@
 Renderable::Renderable() : bounding_box(NULL) {}
 
 // Renderable with known material, does not have a bounding box
-Renderable::Renderable(Material m) :
+Renderable::Renderable(Material* m) :
    bounding_box(NULL),  material(m) { }
 
 // On deconstruction of renderable, also delete the bounding box 
@@ -27,7 +27,7 @@ AABB::AABB() :
 }
 
 // Generic AABB located at a point with given dimensions
-AABB::AABB(Vector3f center_, Vector3f dimensions_, Material m) :
+AABB::AABB(Vector3f center_, Vector3f dimensions_, Material* m) :
     Renderable(m), valid(true), center(center_), dimensions(dimensions_) {
    
     this->bounding_box = this;
@@ -64,6 +64,7 @@ IntersectData AABB::intersects(Ray ray) {
     IntersectData out;
     out.material = this->material;
     out.t = nan("");
+    out.object = this;
 
     // Find where the ray is on the left, right, or in the middle
     // of each dimension. Based on that, we reduce this to 3 plane 

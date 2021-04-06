@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 // Plane constructor. Normalizes the normal
-Plane::Plane(Vector3f point_, Vector3f norm_, Material material_) :
+Plane::Plane(Vector3f point_, Vector3f norm_, Material* material_) :
     Renderable(material_), 
     point(point_), norm(norm_.normalize()) {
 };
@@ -13,6 +13,7 @@ Plane::Plane(Vector3f point_, Vector3f norm_, Material material_) :
 // Plane ray intersection math
 IntersectData Plane::intersects(Ray r) {
     IntersectData out;
+    out.object = this;
     float d = this->norm.dot(r.direction);
     out.normal = norm;
     if(d != 0) {
@@ -29,7 +30,7 @@ IntersectData Plane::intersects(Ray r) {
 AABB* Plane::buildBoundingBox() {return NULL; }
 
 // Sphere constructor
-Sphere::Sphere(Vector3f center_, float radius_, Material material_) :
+Sphere::Sphere(Vector3f center_, float radius_, Material* material_) :
     Renderable(material_), 
     center(center_), radius(radius_) {
 
@@ -52,6 +53,7 @@ IntersectData Sphere::intersects(Ray r) {
 
     IntersectData out;
     out.material = this->material;
+    out.object = this;
     Vector3f L = this->center - r.origin;
 
     float dir_len = r.direction.length();
@@ -90,7 +92,7 @@ IntersectData Sphere::intersects(Ray r) {
 // Constructor for a triangle that has per vertex normals. Still
 // calculates the face normal
 Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
-        Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_, Material material_) :
+        Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_, Material* material_) :
     Renderable(material_), A(A_), B(B_), C(C_), 
     A_normal(A_normal_), B_normal(B_normal_), C_normal(C_normal_){
 
@@ -104,7 +106,7 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_,
 
 // Triangle constructor, which computes the triangles normal. Vertex
 // normals are the same as the face normals
-Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material material_) :
+Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material* material_) :
     Renderable(material_), A(A_), B(B_), C(C_) {
 
         // Precompute normal
@@ -167,6 +169,7 @@ IntersectData Triangle::intersects(Ray r) {
     out.normal = normal;
     out.normal.normalize();
     out.material = material;
+    out.object = this;
     if(d == 0) { // Paralell case
         return out;
     } else {
@@ -214,8 +217,8 @@ IntersectData Triangle::intersects(Ray r) {
 // Prism constructor. Breaks up the prisim into 12 triangles and
 // pushes them to a mesh
 Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
-        Vector3f dimensions_, Material material) 
-: center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {
+        Vector3f dimensions_, Material* material) 
+: Mesh(material), center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {
 
     float half_width = dimensions.x / 2.0;
     float half_height = dimensions.y / 2.0;
