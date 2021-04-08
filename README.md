@@ -27,19 +27,19 @@ table shows the time taken for each render, as well as the total number of rays 
 | :---    | :---:   | :---: |
 | Shadows       | 168.9 s | 62,067,687 |
 | Transparent       | 337.8 s | 90,657,895 |
-| Reflective       | 161.5 | 61,117,776 |
+| Reflective       | 161.5 s | 61,117,776 |
 
 The first image consists of a few boxes. The main light source is a sphere in the back. There is
 also a triangle at the top which acts as a mirror.  
 ![Shadows](images/mp3/light.png)  
 
 The second image is similar to the first, except the light source is moves to be one of the boxes.
-A transparent sphere is also added
+A transparent sphere is also added  
 ![Transparent](images/mp3/trans.png)  
 
 The last image removes the transparent sphere, and makes everything reflective. The light source
 is also moved to the triangle. A little more anti-aliasing rays are probably needed since the light
-source is a bit further back, however I left it the same for consistent benchmarking.
+source is a bit further back, however I left it the same for consistent benchmarking.  
 ![Reflective](images/mp3/reflect.png);
 
 
