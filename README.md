@@ -17,6 +17,16 @@ by Kevin Palani
 - renderer: Code to recursively render scene. Needs clean up
 - vector: Custom vector math for 2d and 3d vectors
 
+### Code Referenced
+
+Ray Box Intersection: 
+Based off of "Fast Ray-Box Intersection" by Andrew Woo
+from "Graphics Gems", Academic Press, 1990.
+Source: https://web.archive.org/web/20090803054252/http://tog.acm.org/resources/GraphicsGems/gems/RayBox.c
+
+Material Math: https://raytracing.github.io/books/RayTracingInOneWeekend.html#metal
+
+
 ## MP3 Pictures
 
 All 3 images were generated using Monte Carlo style ray tracing, with 64 samples per pixel, and a maximum
