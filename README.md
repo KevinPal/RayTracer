@@ -8,7 +8,7 @@ by Kevin Palani
 - camera: Defines a generic camera, with an ortho and perspective camera
 - color: Generic color wrapper
 - display: Methods to render to a PNG or to a window
-- material: Represents a material
+- material: Represents a material, and defines a few types
 - main: Sets up the scene and loops across all rays
 - mesh: Methods to deal with groups of renderables. Can also load mesh from a simple obj file
 - primitives: Render logic and AABB generation for primitives like triangles, planes, spheres, etc
@@ -16,6 +16,32 @@ by Kevin Palani
 - renderable: Abstract class for things that can be rendered, along with what data a ray trace should return. Also defines AABBs
 - renderer: Code to recursively render scene. Needs clean up
 - vector: Custom vector math for 2d and 3d vectors
+
+## MP3 Pictures
+
+All 3 images were generated using Monte Carlo style ray tracing, with 64 samples per pixel, and a maximum
+recursion depth of 2. The code is written in c++, and was benchmarked on a single core i7-10750H. The following
+table shows the time taken for each render, as well as the total number of rays used
+
+| Picture | Time    | Rays  |
+| :---    | :---:   | :---: |
+| Shadows       | 168.9 s | 62,067,687 |
+| Transparent       | 337.8 s | 90,657,895 |
+| Reflective       | 161.5 | 61,117,776 |
+
+The first image consists of a few boxes. The main light source is a sphere in the back. There is
+also a triangle at the top which acts as a mirror.  
+![Shadows](images/mp3/light.png)  
+
+The second image is similar to the first, except the light source is moves to be one of the boxes.
+A transparent sphere is also added
+![Transparent](images/mp3/trans.png)  
+
+The last image removes the transparent sphere, and makes everything reflective. The light source
+is also moved to the triangle. A little more anti-aliasing rays are probably needed since the light
+source is a bit further back, however I left it the same for consistent benchmarking.
+![Reflective](images/mp3/reflect.png);
+
 
 ## MP2 Pictures
 

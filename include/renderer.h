@@ -9,6 +9,6 @@
 
 // Renders a ray passing through the scene. Depth is
 // the number of ray bounces we want to do
-Color renderRay(Ray r, Mesh* scene, Mesh* lighting, int depth);
+Color renderRay(Ray r, Mesh* scene, Mesh* lighting, int depth, long* rays);
 
 #endif

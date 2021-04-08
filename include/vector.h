@@ -69,6 +69,7 @@ class Vector3f {
         Vector3f normalize();
         // Returns the normal of this vector. This vector is unchanged
         Vector3f norm();
+        Vector3f abs() const;
 
         // Vector vector operations
         Vector3f operator-(const Vector3f& other) const;

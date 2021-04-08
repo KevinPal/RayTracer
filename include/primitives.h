@@ -4,6 +4,7 @@
 #include "renderable.h"
 #include "mesh.h"
 #include "color.h"
+#include "BVH.h"
 
 /*
  * Defines a plane to be rendered
@@ -30,6 +31,7 @@ class Sphere : public Renderable {
     public:
         Vector3f center;
         float radius;
+        bool invert = false;
 
         // Specifies a sphere from a point and raduis, and an optional material
         Sphere(Vector3f point, float radius);
@@ -66,7 +68,7 @@ class Triangle : public Renderable {
                 Material* material);
 
         // Tests of a ray intersects this trinagle
-        IntersectData intersects(Ray r);
+        IntersectData intersects(Ray r) override;
         AABB* buildBoundingBox() override;
 
 };
@@ -75,7 +77,7 @@ class Triangle : public Renderable {
  * Definnes an arbitrary 3d prism to be rendered. Gets broken down
  * into 12 triangles, which is placed into a mesh to be rendered
  */
-class Prism : public Mesh {
+class Prism : public BVHNode {
 
     public:
         Vector3f center;

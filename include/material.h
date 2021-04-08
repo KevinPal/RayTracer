@@ -5,6 +5,8 @@
 #include "vector.h"
 #include "ray.h"
 
+#include <stdexcept>
+
 
 /* Represents a material. This class is not fully acurate yet,
  * but works for now. Specifies a color, its transperency,
@@ -17,12 +19,21 @@ class Material {
         Color albedo;
         Color emission;
 
-        virtual float BRDF(Ray& in, Ray& out, Vector3f& normal) = 0;
-        virtual Vector3f scatterRay(Vector3f& in_dir, Vector3f& normal) = 0;
+        virtual float BRDF(Ray& in, Ray& out, Vector3f& normal) { return 0; };
+        virtual float BTDF(Ray& in, Ray& out, Vector3f& normal) { return 0; };
+        virtual float BEDF(Ray& in, Vector3f& normal) { return 0; };
 
-        Material() : Material(Vector3f()) {}
-        Material(Color albedo_): Material(albedo_, Vector3f()) {}
-        Material(Color albedo_, Color emission_): albedo(albedo_), emission(emission_) {}
+        virtual bool doesReflect() { return false; }
+        virtual bool doesEmmit() { return false; }
+        virtual bool doesTransmit() { return false; }
+
+        virtual Vector3f scatterRay(Vector3f& in_dir, Vector3f& normal) {
+            throw std::logic_error("Scatter Ray not implemented");
+        }
+
+        virtual Vector3f transmitRay(Vector3f& in_dir, Vector3f& normal) {
+            throw std::logic_error("Scatter Ray not implemented");
+        }
 
 };
 
@@ -32,9 +43,9 @@ class DiffuseMaterial : public Material {
         float BRDF(Ray& in, Ray& out, Vector3f& normal) override;
         Vector3f scatterRay(Vector3f& in_dir, Vector3f& normal) override;
 
-        DiffuseMaterial() : Material(Vector3f()) {}
-        DiffuseMaterial(Color albedo_): Material(albedo_, Vector3f()) {}
-        DiffuseMaterial(Color albedo_, Color emission_): Material(albedo_, emission_) {}
+        bool doesReflect() { return true; }
+
+        DiffuseMaterial(Color albedo);
 
 };
 
@@ -44,9 +55,41 @@ class MirrorMaterial : public Material {
         float BRDF(Ray& in, Ray& out, Vector3f& normal) override;
         Vector3f scatterRay(Vector3f& in_dir, Vector3f& normal) override;
 
-        MirrorMaterial() : Material(Vector3f()) {}
-        MirrorMaterial(Color albedo_): Material(albedo_, Vector3f()) {}
-        MirrorMaterial(Color albedo_, Color emission_): Material(albedo_, emission_) {}
+        bool doesReflect() { return true; }
+
+        MirrorMaterial(Color albedo);
+
+};
+
+class EmissiveMaterial : public Material {
+
+    public:
+    
+        float BEDF(Ray& in, Vector3f& normal);
+
+        bool doesEmmit() { return true; }
+
+        EmissiveMaterial(Color emission);
+
+};
+
+class RefractiveMaterial : public Material {
+
+    public:
+
+        float IOR;
+        float kt;
+
+        bool doesReflect() { return true; }
+        bool doesTransmit() { return true; }
+
+        Vector3f scatterRay(Vector3f& in_dir, Vector3f& normal) override;
+        Vector3f transmitRay(Vector3f& in_dir, Vector3f& normal) override;
+
+        float BRDF(Ray& in, Ray& out, Vector3f& normal) override;
+        float BTDF(Ray& in, Ray& out, Vector3f& normal) override;
+
+        RefractiveMaterial(float IOR, float kt);
 
 };
 

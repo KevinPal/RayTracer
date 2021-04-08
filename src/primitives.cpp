@@ -2,6 +2,7 @@
 #include "primitives.h"
 #include "math.h"
 #include "vector.h"
+#include "BVH.h"
 #include <stdio.h>
 
 // Plane constructor. Normalizes the normal
@@ -83,6 +84,8 @@ IntersectData Sphere::intersects(Ray r) {
             out.t /= dir_len;
 
             out.normal = (r.getPoint(out.t) - this->center).normalize();
+            if(this->invert)
+                out.normal = out.normal * -1;
         }
     }
 
@@ -218,7 +221,7 @@ IntersectData Triangle::intersects(Ray r) {
 // pushes them to a mesh
 Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
         Vector3f dimensions_, Material* material) 
-: Mesh(material), center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {
+: BVHNode(material, 2), center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {
 
     float half_width = dimensions.x / 2.0;
     float half_height = dimensions.y / 2.0;
@@ -261,7 +264,7 @@ Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
     }
 
     this->bounding_box = this->buildBoundingBox();
-
+    this->partition();
 }
 
 Prism::~Prism() {

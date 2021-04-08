@@ -186,13 +186,17 @@ bool Vector3f::isClose(const Vector3f& other) const {
 }
 
 bool Vector3f::isClose(const Vector3f& other, float epsilon) const {
-    return (abs(x - other.x) <= epsilon) && 
-                (abs(y - other.y) <= epsilon) && 
-                (abs(z - other.z) <= epsilon);
+    return (std::abs(x - other.x) <= epsilon) && 
+                (std::abs(y - other.y) <= epsilon) && 
+                (std::abs(z - other.z) <= epsilon);
 }
 
 float Vector3f::angleCos(const Vector3f& other) const {
     return (this->dot(other)) / (this->length() * other.length());
+}
+
+Vector3f Vector3f::abs() const {
+    return Vector3f(std::abs(x), std::abs(y), std::abs(z));
 }
 
 void Vector3f::print(void) const {
