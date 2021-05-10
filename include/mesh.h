@@ -6,6 +6,9 @@
 
 #include <vector>
 
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+
 /*
  * The mesh class represents a group of other objects that
  * can be rendered. An intersection check tests all the object
@@ -33,7 +36,7 @@ class Mesh : public Renderable {
 
         // Tests if a ray intersects any of the objects
         // in this mesh
-        IntersectData intersects(Ray r);
+        __host__ __device__ IntersectData intersects(Ray r);
 
         // Tests if a ray intersects the objects without AABBs in this mesh
         IntersectData intersects_large(Ray r);

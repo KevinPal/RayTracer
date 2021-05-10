@@ -6,6 +6,9 @@
 #include "color.h"
 #include "BVH.h"
 
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+
 /*
  * Defines a plane to be rendered
  */
@@ -19,7 +22,7 @@ class Plane : public Renderable {
         Plane(Vector3f point, Vector3f norm, Material* material);
 
         // Checks if a ray intersects this plane
-        IntersectData intersects(Ray r) override;
+        __host__ __device__ IntersectData intersects(Ray r) override;
         AABB* buildBoundingBox() override;
 };
 
@@ -37,7 +40,9 @@ class Sphere : public Renderable {
         Sphere(Vector3f point, float radius);
         Sphere(Vector3f point, float radius, Material* material);
 
-        IntersectData intersects(Ray r) override;
+        __host__ __device__ IntersectData meme(Ray r);
+
+        __host__ __device__ IntersectData intersects(Ray r) override;
         AABB* buildBoundingBox() override;
 };
 
@@ -68,30 +73,10 @@ class Triangle : public Renderable {
                 Material* material);
 
         // Tests of a ray intersects this trinagle
-        IntersectData intersects(Ray r) override;
+        __host__ __device__ IntersectData intersects(Ray r) override;
         AABB* buildBoundingBox() override;
 
 };
 
-/*
- * Definnes an arbitrary 3d prism to be rendered. Gets broken down
- * into 12 triangles, which is placed into a mesh to be rendered
- */
-class Prism : public BVHNode {
-
-    public:
-        Vector3f center;
-        Vector3f up;
-        Vector3f right;
-        Vector3f dimensions;
-
-        // Defines a prism based on how to go "up" and "right". The 3rd vector is perpendicular
-        // to both of these
-        Prism(Vector3f center_, Vector3f up_, Vector3f right_, Vector3f dimensions_, Material* material);
-        ~Prism();
-
-        Triangle* triangles[12];
-
-};
 
 #endif

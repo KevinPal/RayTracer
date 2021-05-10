@@ -28,7 +28,6 @@ Display* Display::getInstance() {
 cairo_status_t Display::init(int width, int height) {
 
     GtkWidget *window;
-    GtkWidget *darea;
     cairo_status_t err;
 
     this->width = width;
@@ -61,6 +60,10 @@ cairo_status_t Display::init(int width, int height) {
     gtk_window_set_title(GTK_WINDOW(window), "Image");
 
     gtk_widget_show_all(window);
+}
+
+void Display::redraw() {
+    gtk_widget_queue_draw(darea);
 }
 
 void Display::writeToPNG(const char* filename) {

@@ -2,6 +2,7 @@
 #include "renderable.h"
 #include "mesh.h"
 #include "ray.h"
+#include "primitives.h"
 
 #include <vector>
 #include <math.h>
@@ -10,10 +11,94 @@
 #include <cmath>
 #include <stack>
 
+
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 #define CLAMP(X, A, B) ((X) < (A) ? (A) : ((X) > (B) ? (B) : (X)))
 
 #define DO_ALPHA 1
 #define DO_SPEC 1
+
+#define wbCheck(stmt)                                                     \
+  do {                                                                    \
+    cudaError_t err = stmt;                                               \
+    if (err != cudaSuccess) {                                             \
+      printf("%s%s\n", "CUDA error: ", cudaGetErrorString(err));              \
+      printf("%s%s\n", "Failed to run stmt ", #stmt);                         \
+    }                                                                     \
+  } while (0)
+
+#define BLOCK_SIZE 32
+
+__global__ void renderRaysKernel(Ray* rays, unsigned char* output, int width, int height, Sphere* s) {
+
+    int screen_x = threadIdx.x + blockIdx.x * blockDim.x;
+    int screen_y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    Vector3f light(10, 10, -20);
+    float l_int = 10.0;
+
+
+    if(screen_x < width && screen_y < height) {
+        Ray ray = rays[screen_y * width + screen_x];
+
+        //s->intersects(ray);
+        IntersectData min_hit = s->meme(ray);
+
+        Vector3f hit_pos = ray.getPoint(min_hit.t);
+
+        Color c = (min_hit.t >= 0 ? Color(0, 1, 0) : Color(0, 0, 0));
+
+        float list_dist = (light - hit_pos).length();
+        Vector3f light_ray = (light - hit_pos).normalize();
+        float light_factor =  sqrt(abs(min_hit.normal.dot(light_ray)));
+
+        Vector3f light_bounce = min_hit.normal * light_ray.dot(min_hit.normal) * 2 - light_ray;
+
+        Vector3f cAmbient = c;
+        Vector3f cDiffuse = Vector3f(1, 1, 1);
+        Vector3f cSpecular = Vector3f(1, 1, 1);
+
+        float kAmbient = 0.5;
+        float kDiffuse = CLAMP(light_factor / (list_dist) * l_int , 0, 1);
+        float kSpecular = pow(light_bounce.dot(ray.direction), 100);
+
+        c = cAmbient * kAmbient + cDiffuse * kDiffuse + cSpecular * kSpecular;
+
+        c.clamp();
+        c.writeToBuff(&(output[(int)(4 * (screen_y * width + screen_x))]));
+    }
+}
+
+__host__ void renderRays(Ray* rays, unsigned char* output, int width, int height, Sphere* s) {
+
+    Ray* deviceRayBuffer;
+    unsigned char* deviceOutput;
+    Sphere* deviceSphere;
+   
+    wbCheck(cudaMalloc((void**) &deviceRayBuffer, sizeof(Ray) * width * height));
+    wbCheck(cudaMalloc((void**) &deviceOutput, sizeof(unsigned char) * width * height * 4));
+    wbCheck(cudaMalloc((void**) &deviceSphere, sizeof(Sphere)));
+
+    wbCheck(cudaMemcpy(deviceRayBuffer, rays, sizeof(Ray) * width * height, cudaMemcpyHostToDevice));
+    wbCheck(cudaMemcpy(deviceSphere, s, sizeof(Sphere), cudaMemcpyHostToDevice));
+
+
+    dim3 DimBlock(BLOCK_SIZE, BLOCK_SIZE, 1);
+    dim3 DimGrid(ceil(width / (float) BLOCK_SIZE), ceil(width / (float) BLOCK_SIZE) , 1);
+
+    renderRaysKernel<<<DimGrid, DimBlock>>>(deviceRayBuffer, deviceOutput, width, height, deviceSphere);
+
+    wbCheck(cudaMemcpy(output, deviceOutput, sizeof(unsigned char) * width * height * 4, cudaMemcpyDeviceToHost));
+
+    wbCheck(cudaFree(deviceRayBuffer));
+    wbCheck(cudaFree(deviceOutput));
+    wbCheck(cudaFree(deviceSphere));
+
+}
+
+
+
 
 Color renderRay(Ray ray, Mesh* scene, Mesh* lights, int depth, long* rays) {
 

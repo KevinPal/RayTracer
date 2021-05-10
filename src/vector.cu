@@ -152,12 +152,13 @@ float& Vector3f::operator[](int i) {
         return this->y;
     else if(i == 2)
         return this->z;
-    else
-        throw std::out_of_range("Vector out of range");
+    else {
+        return this->x;
+    }
             
 }
 
-const float Vector3f::operator[](int i) const {
+float Vector3f::operator[](int i) const {
     return (*this)[i];
 }
 

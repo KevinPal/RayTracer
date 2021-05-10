@@ -19,6 +19,7 @@ class Display {
     private:
         cairo_surface_t* screen;
         unsigned char* buffer;
+        GtkWidget *darea;
         int width;
         int height;
 
@@ -40,6 +41,8 @@ class Display {
 
         // Gets a pointer to the cairo object for the screen
         cairo_surface_t* getScreen() { return screen; }
+
+        void redraw();
 
         // Gets the width in pixels of the screen
         int getWidth() { return width; }

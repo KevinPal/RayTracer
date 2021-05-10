@@ -1,6 +1,10 @@
 #ifndef COLOR_H
 #define COLOR_H
 
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#define HOSTDEVICE __host__ __device__
+
 #include "vector.h"
 
 /* A class to represent colors. 
@@ -11,25 +15,25 @@ class Color : public Vector3f{
     public:
 
         // Creates the color black
-        Color() : Vector3f() {};
+        HOSTDEVICE Color() : Vector3f() {};
 
         // Copy constuctor from another color
-        Color(const Color& other):
+        HOSTDEVICE Color(const Color& other):
             Vector3f(other) {}
 
         // Specify the color from another vector
-        Color(const Vector3f& other):
+        HOSTDEVICE Color(const Vector3f& other):
             Vector3f(other) {}
 
         // Specify the B G R of the color directly
-        Color(float x_, float y_, float z_) :
+        HOSTDEVICE Color(float x_, float y_, float z_) :
             Vector3f(x_, y_, z_) {}
 
         // Writes the color to a buffer in the BGRA format
-        unsigned char* writeToBuff(unsigned char* buff);
+        HOSTDEVICE unsigned char* writeToBuff(unsigned char* buff);
 
         // Clamps the components of the color
-        void clamp(void);
+        HOSTDEVICE void clamp(void);
 };
 
 #endif

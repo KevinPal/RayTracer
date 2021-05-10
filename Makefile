@@ -1,14 +1,17 @@
-CXX	  := -c++
-CXXFLAGS := -g
-LDFLAGS  := -L/usr/lib -lstdc++ -lm -lpthread
+CXX	  := nvcc
+CXXFLAGS := -g -rdc=true
+LDFLAGS  := -L/usr/lib -lstdc++ -lm
 BUILD	:= ./build
 OBJ_DIR  := $(BUILD)/objects
 APP_DIR  := $(BUILD)/apps
 TARGET   := mp1
 
-INCLUDE  := -Iinclude/ \
+INCLUDE  := -I include/ \
 	`pkg-config -cflags glib-2.0` \
-	`pkg-config -cflags gtkmm-3.0`
+	`pkg-config -cflags gtkmm-3.0 | head -c-11`
+
+# the head part removes the pthread dependancy, since nvcc already has
+# it and complains if we include it again
 
 LDFLAGS += \
 	`pkg-config -libs glib-2.0` \
@@ -17,7 +20,12 @@ LDFLAGS += \
 SRC	  :=					  \
    $(wildcard src/*.cpp)		 \
 
-OBJECTS  := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
+SRC_CU	  :=					  \
+   $(wildcard src/*.cu)		 \
+
+OBJECTS     := $(SRC:%.cpp=$(OBJ_DIR)/%.o)
+OBJECTS_CU  := $(SRC_CU:%.cu=$(OBJ_DIR)/%.obj)
+
 DEPENDENCIES \
 		 := $(OBJECTS:.o=.d)
 
@@ -27,7 +35,11 @@ $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -MMD -o $@
 
-$(APP_DIR)/$(TARGET): $(OBJECTS)
+$(OBJ_DIR)/%.obj: %.cu
+	@mkdir -p $(@D)
+	$(CXX) $(CXXFLAGS) $(INCLUDE) -c $< -MMD -o $@
+
+$(APP_DIR)/$(TARGET): $(OBJECTS) $(OBJECTS_CU)
 	@mkdir -p $(@D)
 	$(CXX) $(CXXFLAGS) -o $(APP_DIR)/$(TARGET) $^ $(LDFLAGS)
 

@@ -1,6 +1,10 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+#define HOSTDEVICE __host__ __device__
+
 class Vector2f;
 class Vector3f;
 
@@ -56,51 +60,51 @@ class Vector3f {
         float z;
 
         // Constructors. Any unspecified component will defaul to 0
-        Vector3f();
-        Vector3f(const Vector3f& other);
-        Vector3f(const Vector2f& other);
-        Vector3f(float x_, float y_);
-        Vector3f(float x_, float y_, float z_);
+        HOSTDEVICE Vector3f();
+        HOSTDEVICE Vector3f(const Vector3f& other);
+        HOSTDEVICE Vector3f(const Vector2f& other);
+        HOSTDEVICE Vector3f(float x_, float y_);
+        HOSTDEVICE Vector3f(float x_, float y_, float z_);
 
         // Gets the length or squared length of this vector
-        float length() const;
-        float length2() const;
+        HOSTDEVICE float length() const;
+        HOSTDEVICE float length2() const;
         // Normalizes this vector
-        Vector3f normalize();
+        HOSTDEVICE Vector3f normalize();
         // Returns the normal of this vector. This vector is unchanged
-        Vector3f norm();
-        Vector3f abs() const;
+        HOSTDEVICE Vector3f norm();
+        HOSTDEVICE Vector3f abs() const;
 
         // Vector vector operations
-        Vector3f operator-(const Vector3f& other) const;
-        Vector3f operator+(const Vector3f& other) const;
-        Vector3f operator/(const Vector3f& other) const;
-        Vector3f operator*(const Vector3f& other) const;
+        HOSTDEVICE Vector3f operator-(const Vector3f& other) const;
+        HOSTDEVICE Vector3f operator+(const Vector3f& other) const;
+        HOSTDEVICE Vector3f operator/(const Vector3f& other) const;
+        HOSTDEVICE Vector3f operator*(const Vector3f& other) const;
 
         // component wise operations
-        Vector3f operator/(const float& other) const;
-        Vector3f operator*(const float& other) const;
+        HOSTDEVICE Vector3f operator/(const float& other) const;
+        HOSTDEVICE Vector3f operator*(const float& other) const;
 
         // Dot and cross product
-        float dot(const Vector3f& other) const;
-        Vector3f cross(const Vector3f& other) const;
+        HOSTDEVICE float dot(const Vector3f& other) const;
+        HOSTDEVICE Vector3f cross(const Vector3f& other) const;
 
         // Equaility operations
-        bool operator==(const Vector3f& other) const;
-        bool operator!=(const Vector3f& other) const;
+        HOSTDEVICE bool operator==(const Vector3f& other) const;
+        HOSTDEVICE bool operator!=(const Vector3f& other) const;
 
         // Array access operators
-        float& operator[](int i);
-        const float operator[](int i) const;
+        HOSTDEVICE float& operator[](int i);
+        HOSTDEVICE float operator[](int i) const;
 
         // Determines if two vectors are "close" by some epsilon
-        bool isClose(const Vector3f& other) const;
-        bool isClose(const Vector3f& other, float epsilon) const;
+        HOSTDEVICE bool isClose(const Vector3f& other) const;
+        HOSTDEVICE bool isClose(const Vector3f& other, float epsilon) const;
 
-        float angleCos(const Vector3f& other) const;
+        HOSTDEVICE float angleCos(const Vector3f& other) const;
 
         // Prints the vector to console
-        void print(void) const;
+        HOSTDEVICE void print(void) const;
 
         // Random vector generation
         static Vector3f randomVect(float minX, float maxX, float minY, float maxY, float minZ, float maxZ);

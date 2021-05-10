@@ -4,6 +4,9 @@
 #include "mesh.h"
 #include "renderable.h"
 
+#include <cuda.h>
+#include <cuda_runtime_api.h>
+
 // Class to represent the BVHNode. As a subclass of mesh, it 
 // still contains an array of renderables at any point, so
 // any node could be drawn using underlying mesh functions.
@@ -23,7 +26,7 @@ class BVHNode : public Mesh {
             : Mesh(material_, start, end), left(NULL), right(NULL), leaf_size(leaf_size_) {}
 
         // Check if a ray intersects this BVH
-        IntersectData intersects(Ray r);
+        __host__ __device__ IntersectData intersects(Ray r);
 
         // Recursively partition this BVH
         void partition();

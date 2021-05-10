@@ -48,14 +48,63 @@ AABB* Sphere::buildBoundingBox() {
 
 }
 
+IntersectData Sphere::meme(Ray r) {
+    IntersectData out;
+
+    //out.material = this->material;
+    //out.object = this;
+    Vector3f L = this->center - r.origin;
+
+    out.t = 1;
+
+
+    float dir_len = r.direction.length();
+    r.direction.normalize();
+    float t_ca = L.dot(r.direction);
+    if(t_ca < 0) {
+        out.t = nan("");
+    } else {
+        float d = sqrt(L.dot(L) - t_ca * t_ca);
+        if(d < 0) {
+            out.t = nan("");
+        } else {
+            float t_hc = sqrt(this->radius * this->radius - d * d);
+            float t0 = t_ca - t_hc;
+            float t1 = t_ca + t_hc;
+
+            if((t0 > 0) && (t1 > 0)) {
+                out.t =  t0 < t1 ? t0 : t1;
+            } else if(t0 > 0) {
+                out.t = t0;
+            } else if(t1 > 0) {
+                out.t = t1;
+            } else {
+                out.t = nan("");
+            }
+
+            out.t /= dir_len;
+
+            out.normal = (r.getPoint(out.t) - this->center).normalize();
+            if(this->invert)
+                out.normal = out.normal * -1;
+        }
+    }
+
+    return out;
+}
+
 // Math based off of https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 // Tests if ray intersects sphere, and calculates normal if so
 IntersectData Sphere::intersects(Ray r) {
 
     IntersectData out;
-    out.material = this->material;
-    out.object = this;
+
+    //out.material = this->material;
+    //out.object = this;
     Vector3f L = this->center - r.origin;
+
+    out.t = 1;
+
 
     float dir_len = r.direction.length();
     r.direction.normalize();
@@ -217,57 +266,3 @@ IntersectData Triangle::intersects(Ray r) {
     }
 }
 
-// Prism constructor. Breaks up the prisim into 12 triangles and
-// pushes them to a mesh
-Prism::Prism(Vector3f center_, Vector3f up_, Vector3f right_,
-        Vector3f dimensions_, Material* material) 
-: BVHNode(material, 2), center(center_), up(up_.normalize()), right(right_.normalize()), dimensions(dimensions_) {
-
-    float half_width = dimensions.x / 2.0;
-    float half_height = dimensions.y / 2.0;
-    float half_depth = dimensions.z / 2.0;
-
-    Vector3f back = up.cross(right).normalize();
-
-    Vector3f back_top_right  = center + back * half_depth + up * half_height + right * half_width;
-    Vector3f back_top_left   = center + back * half_depth + up * half_height - right * half_width;
-    Vector3f back_bot_right  = center + back * half_depth - up * half_height + right * half_width;
-    Vector3f back_bot_left   = center + back * half_depth - up * half_height - right * half_width;
-
-    Vector3f front_top_right = center - back * half_depth + up * half_height + right * half_width;
-    Vector3f front_top_left  = center - back * half_depth + up * half_height - right * half_width;
-    Vector3f front_bot_right = center - back * half_depth - up * half_height + right * half_width;
-    Vector3f front_bot_left  = center - back * half_depth - up * half_height - right * half_width;
-
-    // Top
-    triangles[0] = new Triangle(back_top_right, back_top_left, front_top_left, material);
-    triangles[1] = new Triangle(front_top_right, back_top_right, front_top_left, material);
-    // Bot
-    triangles[2] = new Triangle(back_bot_right, back_bot_left, front_bot_left, material);
-    triangles[3] = new Triangle(front_bot_right, back_bot_right, front_bot_left, material);
-    // Right
-    triangles[4] = new Triangle(front_top_right, back_top_right, front_bot_right, material);
-    triangles[5] = new Triangle(back_bot_right, back_top_right, front_bot_right, material);
-    // Left
-    triangles[6] = new Triangle(front_top_left, back_top_left, front_bot_left, material);
-    triangles[7] = new Triangle(back_bot_left, back_top_left, front_bot_left, material);
-    // Front
-    triangles[8] = new Triangle(front_top_left, front_top_right, front_bot_left, material);
-    triangles[9] = new Triangle(front_bot_right, front_top_right, front_bot_left, material);
-    // Back
-    triangles[10] = new Triangle(back_top_left, back_top_right, back_bot_left, material);
-    triangles[11] = new Triangle(back_bot_right, back_top_right, back_bot_left, material);
-
-    // Add triangles to mesh
-    for(int i = 0; i < 12; i++) {
-        objects.push_back(triangles[i]);
-    }
-
-    this->bounding_box = this->buildBoundingBox();
-    this->partition();
-}
-
-Prism::~Prism() {
-    for(Renderable* r : objects)
-        delete r;
-}
