@@ -3,9 +3,13 @@
 
 #include "mesh.h"
 #include "renderable.h"
+#include "primitives.h"
 
 #include <cuda.h>
 #include <cuda_runtime_api.h>
+
+class BVHNodeGPU;
+class Triangle;
 
 // Class to represent the BVHNode. As a subclass of mesh, it 
 // still contains an array of renderables at any point, so
@@ -26,10 +30,36 @@ class BVHNode : public Mesh {
             : Mesh(material_, start, end), left(NULL), right(NULL), leaf_size(leaf_size_) {}
 
         // Check if a ray intersects this BVH
-        __host__ __device__ IntersectData intersects(Ray r);
+        IntersectData intersects(Ray r);
 
         // Recursively partition this BVH
         void partition();
+
+        BVHNodeGPU* deepCudaCopy(std::vector<void*>);
+};
+
+
+class BVHNodeGPU {
+
+    public:
+        BVHNodeGPU* left;
+        BVHNodeGPU* right;
+
+        Triangle* triangles;
+        int num_triangles;
+
+        AABB bounding_box;
+
+        BVHNodeGPU() {}
+
+        BVHNodeGPU(BVHNodeGPU* left_, BVHNodeGPU* right_, Triangle* triangles_, int num_triangles_, AABB bounding_box_):
+            left(left_), right(right_), triangles(triangles_), num_triangles(num_triangles_), bounding_box(bounding_box_) {}
+
+        __device__ IntersectData intersects(Ray r);
+        __device__ IntersectData intersectsBrute(Ray r);
+
+
+
 };
 
 #endif

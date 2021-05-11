@@ -9,6 +9,15 @@
 
 #define DO_BVH 1
 
+#define wbCheck(stmt)                                                     \
+  do {                                                                    \
+    cudaError_t err = stmt;                                               \
+    if (err != cudaSuccess) {                                             \
+      printf("%s%s\n", "CUDA error: ", cudaGetErrorString(err));              \
+      printf("%s%s\n", "Failed to run stmt ", #stmt);                         \
+    }                                                                     \
+  } while (0)
+
 /*
  * Checks if a ray intersects this BVH Node. Will
  * recusively check left and right children if the 
@@ -68,17 +77,156 @@ IntersectData BVHNode::intersects(Ray r) {
                 }
             }
         }
-        
-        /*
-        for(Renderable* r : objects) {
+    }
+}
 
-            IntersectData data = r->intersects(ray);
-            if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
-                hit = true;
-                min_hit = IntersectData(data);
+BVHNodeGPU* BVHNode::deepCudaCopy(std::vector<void*> cudaPtrs) {
+
+    assert(~(left == NULL) ^ (right == NULL));
+
+    BVHNodeGPU cpu_node;
+
+    if(left != NULL && right != NULL) {
+        BVHNodeGPU* gpu_left = left->deepCudaCopy(cudaPtrs);
+        BVHNodeGPU* gpu_right = right->deepCudaCopy(cudaPtrs);
+
+        cpu_node = BVHNodeGPU(gpu_left, gpu_right, NULL, 0, *(this->bounding_box));
+    } else {
+
+        Triangle* deviceTriangle;
+
+        wbCheck(cudaMalloc((void**) &deviceTriangle, sizeof(Triangle) * this->objects.size()));
+        cudaPtrs.push_back(deviceTriangle);
+
+        for(int i = 0; i < objects.size(); i++) {
+            wbCheck(cudaMemcpy((void*) &(deviceTriangle[i]), objects[i], sizeof(Triangle), cudaMemcpyHostToDevice));
+        }
+
+        cpu_node = BVHNodeGPU(NULL, NULL, deviceTriangle, objects.size(), *(this->bounding_box));
+    }
+
+    BVHNodeGPU* gpu_node;
+
+    wbCheck(cudaMalloc((void**) &gpu_node, sizeof(BVHNodeGPU)));
+    wbCheck(cudaMemcpy(gpu_node, &cpu_node, sizeof(BVHNodeGPU), cudaMemcpyHostToDevice));
+
+    cudaPtrs.push_back(gpu_node);
+
+    return gpu_node;
+}
+
+__device__ IntersectData BVHNodeGPU::intersectsBrute(Ray ray) {
+
+    bool hit = false;
+    IntersectData min_hit;
+    min_hit.t =  -1;
+    for(int i = 0; i < num_triangles; i++) {
+
+        IntersectData data = triangles[i].meme(ray);
+        if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
+            hit = true;
+            min_hit.t = data.t;
+            min_hit.normal = data.normal;
+        }
+    }
+
+    return min_hit;
+
+}
+
+__device__ IntersectData BVHNodeGPU::intersects(Ray ray) {
+
+    // Both should be null or not null
+    assert(!((this->left == NULL) ^ (this->right == NULL)));
+
+    bool hit = false;
+    IntersectData min_hit;
+    min_hit.t = -1;
+
+
+    if(!DO_BVH) {
+        // Use brute force if we don't want BVH
+        return intersectsBrute(ray);
+    } else {
+
+        BVHNodeGPU* stack[32];
+        for(int i = 0; i < 32; i++) {
+            stack[i] = NULL;
+        }
+        int stackPtr = 0;
+
+        stack[stackPtr++] = this;
+
+        while(stackPtr > 0) {
+
+            assert(stackPtr < 30);
+
+            // Pop
+            BVHNodeGPU* curr = stack[stackPtr - 1];
+            stackPtr--;
+
+            if(curr->left == NULL && curr->right == NULL) {
+                // Leaf node
+                IntersectData data = curr->intersectsBrute(ray);
+                if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
+                    hit = true;
+                    min_hit.t = data.t;
+                    min_hit.normal = data.normal;
+                }
+            } else {
+                IntersectData left_bb = curr->left->bounding_box.intersectsGPU(ray);
+                IntersectData right_bb = curr->right->bounding_box.intersectsGPU(ray);
+
+                if(!right_bb.did_hit()) {
+                    if(!left_bb.did_hit()) {
+                        // Neither hit
+                        continue;
+                    } else {
+                        // Left hit
+                        //return this->left->intersects(r);
+                        // Push left
+
+                        stack[stackPtr++] = curr->left;
+                        continue;
+                    }
+                } else {
+                    // Left didnt hit but right did
+                    if(!left_bb.did_hit()) {
+                        //return this->right->intersects(r);
+                        // Push right
+                        stack[stackPtr++] = curr->right;
+                        continue;
+                    } else {
+                        // Both hit, push both
+                        //IntersectData left_inter = this->left->intersects(ray);
+                        //IntersectData right_inter = this->right->intersects(ray);
+
+                        stack[stackPtr++] = curr->right;
+                        stack[stackPtr++] = curr->left;
+                        continue;
+
+
+                        /*
+                        if(left_inter.did_hit() && !right_inter.did_hit()) {
+                            return left_inter;
+                        } else if(!left_inter.did_hit() && right_inter.did_hit()) {
+                            return right_inter;
+                        } else if(left_inter.did_hit() && right_inter.did_hit()) {
+                            if(left_inter.t <= right_inter.t) {
+                                return left_inter;
+                            } else {
+                                return right_inter;
+                            }
+                        } else {
+                            return no_hit;
+                        }
+                        */
+                    }
+                }
             }
         }
-        */
+
+        return min_hit;
     }
 }
 

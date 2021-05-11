@@ -1,5 +1,5 @@
 CXX	  := nvcc
-CXXFLAGS := -g -rdc=true
+CXXFLAGS := -g -G -rdc=true
 LDFLAGS  := -L/usr/lib -lstdc++ -lm
 BUILD	:= ./build
 OBJ_DIR  := $(BUILD)/objects
@@ -53,6 +53,8 @@ build:
 
 debug: CXXFLAGS += -DDEBUG -g
 debug: all
+debug: 
+	@cuda-gdb build/apps/mp1
 
 release: CXXFLAGS += -O2
 release: all
@@ -75,3 +77,5 @@ run:
 	@echo "Done running ${TARGET}"
 
 clean_run: clean all run
+
+

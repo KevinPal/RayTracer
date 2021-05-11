@@ -22,7 +22,7 @@
 #define ANTI_ALIASING_NUM 16
 
 #define BVH_LEAF_SIZE 2
-#define CAMERA_NUM 1
+#define CAMERA_NUM 4
 #define REC_DEPTH 2
 
 #define RAND ((float) (rand() / (float) RAND_MAX))
@@ -118,6 +118,12 @@ int main (int argc, char **argv) {
             Vector3f(15, 10, 10),
             mat_light);
 
+    Triangle t2(
+            Vector3f(-15, 0, 10),
+            Vector3f(0, 10, 0),
+            Vector3f(15, 0, 10),
+            mat_light);
+
     /*
     Prism r(
             Vector3f(5, 0, -5),
@@ -137,18 +143,17 @@ int main (int argc, char **argv) {
     //scene.addObject(&s);
     //scene.addObject(&s2);
     //scene.addObject(&s3);
+    scene.addObject(&t2);
     scene.addObject(&t);
     //scene.addObject(&r);
     //scene.addObject(&r2);
 
     lighting.addObject(&t);
 
-    /*
-    BVHNode m(5);
-    m.material.alpha = 0;
+    BVHNode m(mat_forest_green, 3);
+    //m.material.alpha = 0;
     m.fromOBJ("./res/dragon.obj");
     m.partition();
-    */
 
 
     //scene.addObject(&p);
@@ -303,15 +308,15 @@ int main (int argc, char **argv) {
         frame_time += (curr - last);
 
         if(frame_time > 1000) {
-            frame_time -= 1000;
-            printf("FPS: %d\n", frames);
+            printf("FPS: %d (%d ms)\n", frames, frame_time);
+            frame_time = 0;
             frames = 0;
         }
 
         s.center[0] = cos(theta) * 4;
         s.center[1] = sin(theta) * 7 + 5;
 
-        renderRays(hostRayBuffer, buf, display->getWidth(), display->getHeight(), &s);
+        renderRays(hostRayBuffer, buf, display->getWidth(), display->getHeight(), &m);
 
 
         display->redraw();
@@ -321,7 +326,6 @@ int main (int argc, char **argv) {
     }
 
     free(hostRayBuffer);
-
 
     auto end = duration_cast< milliseconds >(
         system_clock::now().time_since_epoch()

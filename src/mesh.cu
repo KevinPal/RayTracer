@@ -35,7 +35,7 @@ Mesh::Mesh(Material* material_, std::vector<Renderable*>::iterator start, std::v
 IntersectData Mesh::intersects(Ray ray) {
     bool hit = false;
     IntersectData min_hit;
-    min_hit.t = nan("");
+    min_hit.t = -1;
     //printf("Running general intersection on size: %d\n", objects.size() + large_objects.size());
     for(Renderable* r : objects) {
 
@@ -65,7 +65,7 @@ IntersectData Mesh::intersects(Ray ray) {
 IntersectData Mesh::intersects_large(Ray ray) {
     bool hit = false;
     IntersectData min_hit;
-    min_hit.t = nan("");
+    min_hit.t = -1;
 
     //printf("Running large intersection on size: %d\n", large_objects.size());
     for(Renderable* r : large_objects) {

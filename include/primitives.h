@@ -22,7 +22,7 @@ class Plane : public Renderable {
         Plane(Vector3f point, Vector3f norm, Material* material);
 
         // Checks if a ray intersects this plane
-        __host__ __device__ IntersectData intersects(Ray r) override;
+        IntersectData intersects(Ray r) override;
         AABB* buildBoundingBox() override;
 };
 
@@ -42,7 +42,7 @@ class Sphere : public Renderable {
 
         __host__ __device__ IntersectData meme(Ray r);
 
-        __host__ __device__ IntersectData intersects(Ray r) override;
+        IntersectData intersects(Ray r) override;
         AABB* buildBoundingBox() override;
 };
 
@@ -62,6 +62,8 @@ class Triangle : public Renderable {
 
         Vector3f normal;
 
+        AABB* bounding_box;
+
         // Default constructor that just sets all 3 points to 0, 0, 0
         Triangle() {};
         // Specifies all 3 coordinates of the trinalge. Normal will be calculated
@@ -73,8 +75,9 @@ class Triangle : public Renderable {
                 Material* material);
 
         // Tests of a ray intersects this trinagle
-        __host__ __device__ IntersectData intersects(Ray r) override;
-        AABB* buildBoundingBox() override;
+        __host__ __device__ IntersectData meme(Ray r);
+        IntersectData intersects(Ray r);
+        AABB* buildBoundingBox();
 
 };
 

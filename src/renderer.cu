@@ -30,70 +30,75 @@
 
 #define BLOCK_SIZE 32
 
-__global__ void renderRaysKernel(Ray* rays, unsigned char* output, int width, int height, Sphere* s) {
+__global__ void renderRaysKernel(Ray* rays, unsigned char* output, int width, int height, BVHNodeGPU* scene) {
 
     int screen_x = threadIdx.x + blockIdx.x * blockDim.x;
     int screen_y = threadIdx.y + blockIdx.y * blockDim.y;
 
     Vector3f light(10, 10, -20);
     float l_int = 10.0;
+    bool hit = false;
 
 
     if(screen_x < width && screen_y < height) {
         Ray ray = rays[screen_y * width + screen_x];
 
-        //s->intersects(ray);
-        IntersectData min_hit = s->meme(ray);
-
+        IntersectData min_hit = scene->intersects(ray);
         Vector3f hit_pos = ray.getPoint(min_hit.t);
 
         Color c = (min_hit.t >= 0 ? Color(0, 1, 0) : Color(0, 0, 0));
 
-        float list_dist = (light - hit_pos).length();
-        Vector3f light_ray = (light - hit_pos).normalize();
-        float light_factor =  sqrt(abs(min_hit.normal.dot(light_ray)));
+        if(min_hit.t >= 0) {
+            float list_dist = (light - hit_pos).length();
+            Vector3f light_ray = (light - hit_pos).normalize();
+            float light_factor =  sqrt(abs(min_hit.normal.dot(light_ray)));
 
-        Vector3f light_bounce = min_hit.normal * light_ray.dot(min_hit.normal) * 2 - light_ray;
+            Vector3f light_bounce = min_hit.normal * light_ray.dot(min_hit.normal) * 2 - light_ray;
 
-        Vector3f cAmbient = c;
-        Vector3f cDiffuse = Vector3f(1, 1, 1);
-        Vector3f cSpecular = Vector3f(1, 1, 1);
+            Vector3f cAmbient = c;
+            Vector3f cDiffuse = Vector3f(1, 1, 1);
+            Vector3f cSpecular = Vector3f(1, 1, 1);
 
-        float kAmbient = 0.5;
-        float kDiffuse = CLAMP(light_factor / (list_dist) * l_int , 0, 1);
-        float kSpecular = pow(light_bounce.dot(ray.direction), 100);
+            float kAmbient = 0.5;
+            float kDiffuse = CLAMP(light_factor / (list_dist) * l_int , 0, 1);
+            float kSpecular = pow(light_bounce.dot(ray.direction), 100);
 
-        c = cAmbient * kAmbient + cDiffuse * kDiffuse + cSpecular * kSpecular;
+            c = cAmbient * kAmbient + cDiffuse * kDiffuse + cSpecular * kSpecular;
+        }
 
         c.clamp();
         c.writeToBuff(&(output[(int)(4 * (screen_y * width + screen_x))]));
     }
 }
 
-__host__ void renderRays(Ray* rays, unsigned char* output, int width, int height, Sphere* s) {
+__host__ void renderRays(Ray* rays, unsigned char* output, int width, int height, BVHNode* scene) {
 
+    std::vector<void*> ptrs;
     Ray* deviceRayBuffer;
     unsigned char* deviceOutput;
-    Sphere* deviceSphere;
    
     wbCheck(cudaMalloc((void**) &deviceRayBuffer, sizeof(Ray) * width * height));
     wbCheck(cudaMalloc((void**) &deviceOutput, sizeof(unsigned char) * width * height * 4));
-    wbCheck(cudaMalloc((void**) &deviceSphere, sizeof(Sphere)));
+
+    ptrs.push_back(deviceRayBuffer);
+    ptrs.push_back(deviceOutput);
 
     wbCheck(cudaMemcpy(deviceRayBuffer, rays, sizeof(Ray) * width * height, cudaMemcpyHostToDevice));
-    wbCheck(cudaMemcpy(deviceSphere, s, sizeof(Sphere), cudaMemcpyHostToDevice));
 
+    BVHNodeGPU* deviceBVH = scene->deepCudaCopy(ptrs);
 
     dim3 DimBlock(BLOCK_SIZE, BLOCK_SIZE, 1);
     dim3 DimGrid(ceil(width / (float) BLOCK_SIZE), ceil(width / (float) BLOCK_SIZE) , 1);
 
-    renderRaysKernel<<<DimGrid, DimBlock>>>(deviceRayBuffer, deviceOutput, width, height, deviceSphere);
+    renderRaysKernel<<<DimGrid, DimBlock>>>(deviceRayBuffer, deviceOutput, width, height, deviceBVH);
+
+    wbCheck(cudaGetLastError());
 
     wbCheck(cudaMemcpy(output, deviceOutput, sizeof(unsigned char) * width * height * 4, cudaMemcpyDeviceToHost));
 
-    wbCheck(cudaFree(deviceRayBuffer));
-    wbCheck(cudaFree(deviceOutput));
-    wbCheck(cudaFree(deviceSphere));
+    for(void* cudaPtr : ptrs) {
+        wbCheck(cudaFree(cudaPtr));
+    }
 
 }
 
@@ -256,7 +261,7 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
                 //IntersectData alpha_data = scene->intersects(alpha_ray);
                 IntersectData alpha_data = renderRay(alpha_ray, scene, depth - 1);
 
-                if(alpha_data.t != nan("") && (alpha_data.t >= 0)) {
+                if(alpha_data.t != -1 && (alpha_data.t >= 0)) {
                     alpha_stack.push(alpha_data.material);
                     alpha_ray.origin = alpha_ray.getPoint(alpha_data.t);
                 } else {
@@ -290,7 +295,7 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
                 //IntersectData reflection_data = scene->intersects(reflection_ray);
                 IntersectData reflection_data = renderRay(reflection_ray, scene, depth-1);
 
-                if(reflection_data.t != nan("") && (reflection_data.t >= 0)) {
+                if(reflection_data.t != -1 && (reflection_data.t >= 0)) {
                     min_hit.material.color = (min_hit.material.color * (1-spec)) + (reflection_data.material.color * spec);
                 }
             }
@@ -308,7 +313,7 @@ IntersectData renderRay(Ray ray, Mesh* scene, int depth) {
         shadow_ray.origin = shadow_ray.getPoint(1e-4);
         IntersectData shadow_data = scene->intersects(shadow_ray);
 
-        if(shadow_data.t != nan("") && (shadow_data.t >= 0) && (shadow_data.t < 1)) {
+        if(shadow_data.t != -1 && (shadow_data.t >= 0) && (shadow_data.t < 1)) {
             min_hit.material.color = min_hit.material.color / 2;
         } else {
             float list_dist = (light - hit_pos).length();

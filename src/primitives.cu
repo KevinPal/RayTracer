@@ -21,7 +21,7 @@ IntersectData Plane::intersects(Ray r) {
         out.t = (this->point - r.origin).dot(this->norm) / d;
         out.material = this->material;
     } else {
-        out.t = nan("");
+        out.t = -1;
     }
 
     return out;
@@ -62,11 +62,11 @@ IntersectData Sphere::meme(Ray r) {
     r.direction.normalize();
     float t_ca = L.dot(r.direction);
     if(t_ca < 0) {
-        out.t = nan("");
+        out.t = -1;
     } else {
         float d = sqrt(L.dot(L) - t_ca * t_ca);
         if(d < 0) {
-            out.t = nan("");
+            out.t = -1;
         } else {
             float t_hc = sqrt(this->radius * this->radius - d * d);
             float t0 = t_ca - t_hc;
@@ -79,7 +79,7 @@ IntersectData Sphere::meme(Ray r) {
             } else if(t1 > 0) {
                 out.t = t1;
             } else {
-                out.t = nan("");
+                out.t = -1;
             }
 
             out.t /= dir_len;
@@ -110,11 +110,11 @@ IntersectData Sphere::intersects(Ray r) {
     r.direction.normalize();
     float t_ca = L.dot(r.direction);
     if(t_ca < 0) {
-        out.t = nan("");
+        out.t = -1;
     } else {
         float d = sqrt(L.dot(L) - t_ca * t_ca);
         if(d < 0) {
-            out.t = nan("");
+            out.t = -1;
         } else {
             float t_hc = sqrt(this->radius * this->radius - d * d);
             float t0 = t_ca - t_hc;
@@ -127,7 +127,7 @@ IntersectData Sphere::intersects(Ray r) {
             } else if(t1 > 0) {
                 out.t = t1;
             } else {
-                out.t = nan("");
+                out.t = -1;
             }
 
             out.t /= dir_len;
@@ -213,15 +213,68 @@ AABB* Triangle::buildBoundingBox() {
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
+IntersectData Triangle::meme(Ray r) {
+    float d = normal.dot(r.direction);
+    IntersectData out;
+    out.t = -1;
+    out.normal = normal;
+    out.normal.normalize();
+    //out.material = material;
+    //out.object = this;
+    if(d == 0) { // Paralell case
+        return out;
+    } else {
+        float t = (A - r.origin).dot(normal) / d;
+        if(t < 0) { // Ray behind case
+            return out;
+        } else {
+
+            // Compute barycentric
+            Vector3f P = r.getPoint(t);
+
+            Vector3f edge0 = B - A;
+            Vector3f edge1 = C - B;
+            Vector3f edge2 = A - C;
+
+            Vector3f VP0 = P - A;
+            Vector3f VP1 = P - B;
+            Vector3f VP2 = P - C;
+
+            Vector3f C0 = edge0.cross(VP0);
+            Vector3f C1 = edge1.cross(VP1);
+            Vector3f C2 = edge2.cross(VP2);
+
+            float area = normal.length() / 2;
+            float u = (C0.length() / 2) / area;
+            float v = (C1.length() / 2) / area;
+            float w = (C2.length() / 2) / area;
+
+
+            if (normal.dot(C0) <= 0 &&
+                normal.dot(C1) <= 0 &&
+                normal.dot(C2) <= 0) {
+                out.t = t;
+                out.normal = A_normal * v + B_normal * w + C_normal * u;
+                out.normal.normalize();
+                return out;
+            } else {
+                return out;
+            }
+        }
+
+    }
+}
+
+
 IntersectData Triangle::intersects(Ray r) {
 
     float d = normal.dot(r.direction);
     IntersectData out;
-    out.t = nan("");
+    out.t = -1;
     out.normal = normal;
     out.normal.normalize();
-    out.material = material;
-    out.object = this;
+    //out.material = material;
+    //out.object = this;
     if(d == 0) { // Paralell case
         return out;
     } else {

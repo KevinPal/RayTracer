@@ -29,7 +29,7 @@ class IntersectData {
         Renderable* object;
 
         // Default consturctor
-        __host__ __device__ IntersectData() : valid(false), t(nan("")), object(NULL) {}
+        __host__ __device__ IntersectData() : valid(false), t(-1), object(NULL) {}
 
         // General constructor
         __host__ __device__ IntersectData(float t_, Vector3f norm_, Material* m_, Renderable* object_):
@@ -39,7 +39,7 @@ class IntersectData {
         __host__ __device__ IntersectData(const IntersectData& other) :
             IntersectData(other.t, other.normal, other.material, other.object) {}
 
-        __host__ __device__ bool did_hit() { return !std::isnan(t) && t >= 0; }
+        __host__ __device__ bool did_hit() { return t >= 0; }
 };
 
 
@@ -62,7 +62,7 @@ class Renderable {
         Renderable(Material* m);
 
         // Method to test if a ray intersects this ibject
-        __host__ __device__ virtual IntersectData intersects(Ray r) = 0;
+        virtual IntersectData intersects(Ray r) = 0;
 
         virtual AABB* buildBoundingBox() = 0;
         virtual ~Renderable();
@@ -84,7 +84,9 @@ class AABB : public Renderable {
         bool valid;
 
         // Checks if a ray intersects this AABB
-        __host__ __device__ IntersectData intersects(Ray r);
+        IntersectData intersects(Ray r);
+
+        __device__ IntersectData intersectsGPU(Ray r);
 
         // Builds an AABB for this AABB.
         AABB* buildBoundingBox();
