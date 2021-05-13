@@ -10,8 +10,6 @@
 #include <math.h>
 #include <cmath>
 #include <stack>
-
-
 #include <cuda.h>
 #include <cuda_runtime_api.h>
 #define CLAMP(X, A, B) ((X) < (A) ? (A) : ((X) > (B) ? (B) : (X)))
@@ -30,40 +28,84 @@
 
 #define BLOCK_SIZE 32
 
-__global__ void renderRaysKernel(Ray* rays, unsigned char* output, int width, int height, BVHNodeGPU* scene) {
+
+__global__ void intersectKernel(Ray* rays, IntersectData* output, Ray* shadow_rays, int width, int height, BVHNodeGPU* scene) {
+    int screen_x = threadIdx.x + blockIdx.x * blockDim.x;
+    int screen_y = threadIdx.y + blockIdx.y * blockDim.y;
+
+    int idx = screen_y * width + screen_x;
+
+    Vector3f light(10, 10, -20);
+
+    if(screen_x < width && screen_y < height) {
+
+        Ray ray = rays[idx];
+        IntersectData min_hit = scene->intersects(ray);
+        output[idx] = min_hit;
+
+        if(shadow_rays != NULL) {
+            Ray shadow_ray;
+            Vector3f hit_pos = ray.getPoint(min_hit.t);
+            shadow_ray.fromPoints(hit_pos, light);
+            shadow_ray.origin = shadow_ray.getPoint(1e-4);
+
+            shadow_rays[idx] = shadow_ray;
+
+        }
+
+    }
+
+
+}
+
+__global__ void renderRaysKernel(Ray* rays, unsigned char* output, IntersectData* primaryIntersect, IntersectData* shadowIntersect, int width, int height, BVHNodeGPU* scene) {
 
     int screen_x = threadIdx.x + blockIdx.x * blockDim.x;
     int screen_y = threadIdx.y + blockIdx.y * blockDim.y;
 
+    bool hit = false;
     Vector3f light(10, 10, -20);
     float l_int = 10.0;
-    bool hit = false;
 
+    int idx = screen_y * width + screen_x;
 
     if(screen_x < width && screen_y < height) {
-        Ray ray = rays[screen_y * width + screen_x];
 
-        IntersectData min_hit = scene->intersects(ray);
-        Vector3f hit_pos = ray.getPoint(min_hit.t);
+        Ray ray = rays[idx];
+
+        IntersectData min_hit = primaryIntersect[idx];
 
         Color c = (min_hit.t >= 0 ? Color(0, 1, 0) : Color(0, 0, 0));
 
         if(min_hit.t >= 0) {
+            Vector3f hit_pos = ray.getPoint(min_hit.t);
             float list_dist = (light - hit_pos).length();
             Vector3f light_ray = (light - hit_pos).normalize();
             float light_factor =  sqrt(abs(min_hit.normal.dot(light_ray)));
 
+            IntersectData shadow_data = shadowIntersect[idx];
+
             Vector3f light_bounce = min_hit.normal * light_ray.dot(min_hit.normal) * 2 - light_ray;
 
-            Vector3f cAmbient = c;
-            Vector3f cDiffuse = Vector3f(1, 1, 1);
-            Vector3f cSpecular = Vector3f(1, 1, 1);
+            if(shadow_data.t != -1 && (shadow_data.t >= 0) && (shadow_data.t < 1)) {
+                c = c / 2;
+            } else {
+                float list_dist = (light - hit_pos).length();
+                Vector3f light_ray = (light - hit_pos).normalize();
+                float light_factor =  sqrt(abs(min_hit.normal.dot(light_ray)));
 
-            float kAmbient = 0.5;
-            float kDiffuse = CLAMP(light_factor / (list_dist) * l_int , 0, 1);
-            float kSpecular = pow(light_bounce.dot(ray.direction), 100);
+                Vector3f light_bounce = min_hit.normal * light_ray.dot(min_hit.normal) * 2 - light_ray;
 
-            c = cAmbient * kAmbient + cDiffuse * kDiffuse + cSpecular * kSpecular;
+                Vector3f cAmbient = c;
+                Vector3f cDiffuse = Vector3f(1, 1, 1);
+                Vector3f cSpecular = Vector3f(1, 1, 1);
+
+                float kAmbient = 0.5;
+                float kDiffuse = CLAMP(light_factor / (list_dist) * l_int , 0, 1);
+                float kSpecular = pow(light_bounce.dot(ray.direction), 100);
+
+                c = cAmbient * kAmbient + cDiffuse * kDiffuse + cSpecular * kSpecular;
+            }
         }
 
         c.clamp();
@@ -71,35 +113,57 @@ __global__ void renderRaysKernel(Ray* rays, unsigned char* output, int width, in
     }
 }
 
-__host__ void renderRays(Ray* rays, unsigned char* output, int width, int height, BVHNode* scene) {
 
-    std::vector<void*> ptrs;
-    Ray* deviceRayBuffer;
-    unsigned char* deviceOutput;
-   
-    wbCheck(cudaMalloc((void**) &deviceRayBuffer, sizeof(Ray) * width * height));
-    wbCheck(cudaMalloc((void**) &deviceOutput, sizeof(unsigned char) * width * height * 4));
+__host__ void renderRaysInit(Ray* rays, BVHNode* scene, device_data_t* device_data, int width, int height) {
 
-    ptrs.push_back(deviceRayBuffer);
-    ptrs.push_back(deviceOutput);
+    // Setup normal buffers
+    wbCheck(cudaMalloc((void**) &(device_data->deviceRayBuffer), sizeof(Ray) * width * height));
+    wbCheck(cudaMalloc((void**) &(device_data->deviceShadowRayBuffer), sizeof(Ray) * width * height));
+    wbCheck(cudaMalloc((void**) &(device_data->deviceIntersectBuffer), sizeof(IntersectData) * width * height));
+    wbCheck(cudaMalloc((void**) &(device_data->deviceShadowIntersectBuffer), sizeof(IntersectData) * width * height));
+    wbCheck(cudaMalloc((void**) &(device_data->deviceOutput), sizeof(unsigned char) * width * height * 4));
 
-    wbCheck(cudaMemcpy(deviceRayBuffer, rays, sizeof(Ray) * width * height, cudaMemcpyHostToDevice));
+    device_data->ptrs.push_back(device_data->deviceRayBuffer);
+    device_data->ptrs.push_back(device_data->deviceShadowRayBuffer);
+    device_data->ptrs.push_back(device_data->deviceIntersectBuffer);
+    device_data->ptrs.push_back(device_data->deviceShadowIntersectBuffer);
+    device_data->ptrs.push_back(device_data->deviceOutput);
 
-    BVHNodeGPU* deviceBVH = scene->deepCudaCopy(ptrs);
+    // Copy rays and scene to GPU
+    wbCheck(cudaMemcpy(device_data->deviceRayBuffer, rays, sizeof(Ray) * width * height, cudaMemcpyHostToDevice));
+    device_data->scene = scene->deepCudaCopy(device_data->ptrs);
+}
+
+__host__ void renderRays(device_data_t* device_data, unsigned char* output, int width, int height) {
+
+    Ray* deviceRayBuffer = device_data->deviceRayBuffer;
+    Ray* deviceShadowRayBuffer = device_data->deviceShadowRayBuffer;
+    IntersectData* deviceIntersectBuffer = device_data->deviceIntersectBuffer;
+    IntersectData* deviceShadowIntersectBuffer = device_data->deviceShadowIntersectBuffer;
+    unsigned char* deviceOutput = device_data->deviceOutput;
+    BVHNodeGPU* deviceBVH = device_data->scene;
 
     dim3 DimBlock(BLOCK_SIZE, BLOCK_SIZE, 1);
     dim3 DimGrid(ceil(width / (float) BLOCK_SIZE), ceil(width / (float) BLOCK_SIZE) , 1);
 
-    renderRaysKernel<<<DimGrid, DimBlock>>>(deviceRayBuffer, deviceOutput, width, height, deviceBVH);
+    // Do primary ray intersection
+    intersectKernel<<<DimGrid, DimBlock>>>(deviceRayBuffer, deviceIntersectBuffer, deviceShadowRayBuffer, width, height, deviceBVH);
+    // Do shadow ray intersection
+    intersectKernel<<<DimGrid, DimBlock>>>(deviceShadowRayBuffer, deviceShadowIntersectBuffer, NULL, width, height, deviceBVH);
+
+    // Shade outputs
+    renderRaysKernel<<<DimGrid, DimBlock>>>(deviceRayBuffer, deviceOutput, deviceIntersectBuffer, deviceShadowIntersectBuffer, width, height, deviceBVH);
 
     wbCheck(cudaGetLastError());
 
+    // Copy output
     wbCheck(cudaMemcpy(output, deviceOutput, sizeof(unsigned char) * width * height * 4, cudaMemcpyDeviceToHost));
+}
 
-    for(void* cudaPtr : ptrs) {
+__host__ void renderRaysCleanup(device_data_t* device_data) {
+    for(void* cudaPtr : device_data->ptrs) {
         wbCheck(cudaFree(cudaPtr));
     }
-
 }
 
 
