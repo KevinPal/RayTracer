@@ -142,6 +142,23 @@ IntersectData Sphere::intersects(Ray r) {
 }
 
 // Constructor for a triangle that has per vertex normals. Still
+// calculates the face normal. Also has texture coords
+Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
+        Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_,
+        Vector2f A_tex_, Vector2f B_tex_, Vector2f C_tex_,
+        Material* material_) :
+    Renderable(material_), A(A_), B(B_), C(C_), 
+    A_normal(A_normal_), B_normal(B_normal_), C_normal(C_normal_),
+    A_tex(A_tex_), B_tex(B_tex_), C_tex(C_tex_) {
+
+    Vector3f v1 = A - B;
+    Vector3f v2 = C - B;
+    normal = v1.cross(v2);
+
+    hasTexture = true;
+}
+
+// Constructor for a triangle that has per vertex normals. Still
 // calculates the face normal
 Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
         Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_, Material* material_) :
@@ -152,7 +169,7 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_,
     Vector3f v2 = C - B;
     normal = v1.cross(v2);
 
-
+    hasTexture = false;
 }
 
 
@@ -171,7 +188,10 @@ Triangle::Triangle(Vector3f A_, Vector3f B_, Vector3f C_, Material* material_) :
         C_normal = normal;
 
         this->bounding_box = buildBoundingBox();
+
+        hasTexture = false;
 };
+
 
 // Builds the AABB for this triangle
 AABB* Triangle::buildBoundingBox() {
@@ -213,14 +233,14 @@ AABB* Triangle::buildBoundingBox() {
 
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/ray-triangle-intersection-geometric-solution
 // https://www.scratchapixel.com/lessons/3d-basic-rendering/ray-tracing-rendering-a-triangle/barycentric-coordinates
-IntersectData Triangle::meme(Ray r) {
+IntersectData Triangle::intersectsGPU(Ray r) {
     float d = normal.dot(r.direction);
     IntersectData out;
     out.t = -1;
     out.normal = normal;
     out.normal.normalize();
     //out.material = material;
-    //out.object = this;
+    out.object = this;
     if(d == 0) { // Paralell case
         return out;
     } else {
@@ -256,6 +276,7 @@ IntersectData Triangle::meme(Ray r) {
                 out.t = t;
                 out.normal = A_normal * v + B_normal * w + C_normal * u;
                 out.normal.normalize();
+                out.texCord = A_tex * v + B_tex * w + C_tex * u;
                 return out;
             } else {
                 return out;
@@ -310,6 +331,7 @@ IntersectData Triangle::intersects(Ray r) {
                 out.t = t;
                 out.normal = A_normal * v + B_normal * w + C_normal * u;
                 out.normal.normalize();
+                out.texCord = A_tex * v + B_tex * w + C_tex * u;
                 return out;
             } else {
                 return out;

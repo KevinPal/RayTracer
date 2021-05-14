@@ -118,30 +118,105 @@ AABB* Mesh::buildBoundingBox(void) {
 // connected to the vertex, and are area weighted. Adds
 // the new triangles to the mesh
 void Mesh::fromOBJ(std::string path) {
+
+    struct face_data {
+        Vector3f face;
+        Vector3f textures;
+        Vector3f normals;
+    };
+
     std::vector<Vector3f> verticies;
-    std::vector<Vector3f> faces;
+    std::vector<face_data> faces;
+    std::vector<Vector2f> textures;
+    std::vector<Vector3f> normals;
 
     std::ifstream infile(path, std::ios_base::in);
     assert(infile.is_open());
     std::string line;
 
-    char c;
+    std::string c;
     float f1, f2, f3;
+
+    std::string fs1, fs2, fs3;
 
     // Read data from file into faces and verticies arrays
     while(std::getline(infile, line)) {
         std::istringstream ss(line);
 
-        if(!(ss >> c >> f1 >> f2 >> f3)) {
+        if(!(ss >> c)) {
+            std::cout << line << std::endl;
             assert(false);
-        }  else {
-            if(c == 'v') {
-                Vector3f data(f1, f2, f3 * -1);
+        } 
+
+        if(c == "#" || c == "mtllib" || c == "o" || c == "usemtl" || c == "s") {
+            continue;
+        }
+
+        if(c == "vt") {
+            if(!(ss >> f1 >> f2)) {
+                std::cout << "Error reading texture line " << line << std::endl;
+                assert(false);
+            } else {
+                Vector2f data(f1, f2);
+                textures.push_back(data);
+            }
+        } else if(c == "vn") {
+            if(!(ss >> f1 >> f2 >> f3)) {
+                std::cout << "Error reading normal line " << line << std::endl;
+                assert(false);
+            } else {
+                Vector3f data(f1, f2, f3);
+                normals.push_back(data);
+            }
+
+        } else if(c == "v") {
+            if(!(ss >> f1 >> f2 >> f3)) {
+                std::cout << "Error reading vertex line " << line << std::endl;
+                assert(false);
+            } else {
+                Vector3f data(f1, f2, f3);
                 verticies.push_back(data);
-            } else if(c == 'f') {
+            }
+        } else if(c == "f") {
+
+            if(!(ss >> fs1 >> fs2 >> fs3)) {
+                assert(false);
+            } else {
+
+                std::string face_data[3] = {fs1, fs2, fs3};
+
+                Vector3f face;
+                Vector3f text;
+                Vector3f norm;
+
+                for(int face_idx = 0; face_idx < 3; face_idx++) {
+
+                    std::istringstream ss(face_data[face_idx]);
+                    std::string token;
+
+                    for(int i = 0; i < 3; i++) {
+                        std::getline(ss, token, '/');
+                        if(i == 0) {
+                            face[face_idx] = std::stoi(token);
+                        } else if(i == 1) {
+                            text[face_idx] = std::stoi(token);
+                        } else if(i == 2) {
+                            norm[face_idx] = std::stoi(token);
+                        }
+                    }
+
+                }
+
+                faces.push_back({face, text, norm});
+            }
+
+            /*
+            if(c == "v") {
+            } else if(c == "f") {
                 Vector3f data(f1, f2, f3);
                 faces.push_back(data);
             }
+            */
         }
     }
 
@@ -153,9 +228,9 @@ void Mesh::fromOBJ(std::string path) {
     // Calculate per face normals
     for(int i = 0; i < faces.size(); i++) {
 
-        Vector3f& v0 = verticies[faces[i][0] - 1];
-        Vector3f& v1 = verticies[faces[i][1] - 1];
-        Vector3f& v2 = verticies[faces[i][2] - 1];
+        Vector3f& v0 = verticies[faces[i].face[0] - 1];
+        Vector3f& v1 = verticies[faces[i].face[1] - 1];
+        Vector3f& v2 = verticies[faces[i].face[2] - 1];
 
         face_norms[i] = (v1 - v0).cross(v2 - v0);
         face_norm_size[i] = face_norms[i].length();
@@ -170,7 +245,7 @@ void Mesh::fromOBJ(std::string path) {
     // Sum up normals per vertex and face areas
     for(int i = 0; i < faces.size(); i++) {
         for(int j = 0; j < 3; j++) {
-            int vert_index = faces[i][j] - 1;
+            int vert_index = faces[i].face[j] - 1;
             vertex_norms[vert_index] = vertex_norms[vert_index] + face_norms[i] * face_norm_size[i];
             vertex_norm_size[vert_index] += face_norm_size[i];
         }
@@ -184,20 +259,51 @@ void Mesh::fromOBJ(std::string path) {
     // Make triangles and push into mesh
     for(int i = 0; i < faces.size(); i++) {
 
-        int v1 = (int) faces[i][0] - 1;
-        int v2 = (int) faces[i][1] - 1;
-        int v3 = (int) faces[i][2] - 1;
+        int v1 = (int) faces[i].face[0] - 1;
+        int v2 = (int) faces[i].face[1] - 1;
+        int v3 = (int) faces[i].face[2] - 1;
 
-        Triangle* t = new Triangle(
-            verticies[v1],
-            verticies[v2],
-            verticies[v3],
-            vertex_norms[v1],
-            vertex_norms[v2],
-            vertex_norms[v3],
-            this->material
-        );
-        addObject(t);
+        Vector3f n1;
+        Vector3f n2;
+        Vector3f n3;
+
+        if(normals.size() != 0) {
+            n1 = normals[faces[i].normals[0] - 1];
+            n2 = normals[faces[i].normals[1] - 1];
+            n3 = normals[faces[i].normals[2] - 1];
+        } else {
+            n1 = vertex_norms[v1];
+            n2 = vertex_norms[v2];
+            n3 = vertex_norms[v3];
+        }
+
+        Triangle* tri;
+        if(textures.size() == 0) {
+            tri = new Triangle(
+                verticies[v1],
+                verticies[v2],
+                verticies[v3],
+                n1,
+                n2,
+                n3,
+                this->material
+            );
+        } else {
+            tri = new Triangle(
+                verticies[v1],
+                verticies[v2],
+                verticies[v3],
+                n1,
+                n2,
+                n3,
+                textures[faces[i].textures[0] - 1],
+                textures[faces[i].textures[1] - 1],
+                textures[faces[i].textures[2] - 1],
+                this->material
+            );
+
+        }
+        addObject(tri);
     }
 
 }

@@ -8,6 +8,7 @@
 #include "renderer.h"
 #include "antialias.h"
 #include "BVH.h"
+#include "matrix.h"
 
 #include <vector>
 #include <math.h>
@@ -17,6 +18,11 @@
 #include <ctime>
 #include <chrono>
 #include <thread>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <cstring>
 
 #define DO_ANTI_ALIASING 1
 #define ANTI_ALIASING_NUM 16
@@ -27,8 +33,17 @@
 
 #define RAND ((float) (rand() / (float) RAND_MAX))
 
-#define SCREEN_WIDTH 1000
-#define SCREEN_HEIGHT 1000
+#define SCREEN_WIDTH 500
+#define SCREEN_HEIGHT 500
+
+#define wbCheck(stmt)                                                     \
+  do {                                                                    \
+    cudaError_t err = stmt;                                               \
+    if (err != cudaSuccess) {                                             \
+      printf("%s%s\n", "CUDA error: ", cudaGetErrorString(err));              \
+      printf("%s%s\n", "Failed to run stmt ", #stmt);                         \
+    }                                                                     \
+  } while (0)
 
 using namespace std::chrono;
 
@@ -85,6 +100,49 @@ int main (int argc, char **argv) {
     BVHNode scene(mat_pink, BVH_LEAF_SIZE);
     BVHNode lighting(mat_pink, BVH_LEAF_SIZE);
 
+    // Parse in input texture
+    std::ifstream infile("./res/texture.ppm", std::ios_base::in);
+    assert(infile.is_open());
+    std::string line;
+
+    int line_num = 0;
+
+    char* hostTextureMem = NULL;
+    int textureWidth;
+    int textureHeight;
+    int textureIdx = 0;
+
+    // assuming scale is 255
+    bool read_scale = false;
+
+    while(std::getline(infile, line)) {
+        line_num++;
+
+        if(line_num == 1) {
+            assert(line == "P3");
+        } else if(line.at(0) == '#') {
+            std::cout << "Texture comment: " << line << std::endl;
+        } else if(hostTextureMem == NULL) {
+            std::istringstream ss(line);
+
+            if(!(ss >> textureWidth >> textureHeight)) {
+                std::cout << "Error reading texture dims. Line: " << line << std::endl;
+            } else {
+                hostTextureMem = (char*) malloc(textureWidth * textureHeight * 3 * sizeof(char));
+                printf("Texture size %d x %d\n", textureWidth, textureHeight);
+            }
+        } else {
+            if(!read_scale) {
+                read_scale = true;
+                continue;
+            }
+            //std::cout << textureIdx << " " << line << std::endl;
+            hostTextureMem[textureIdx++] = std::stoi(line);
+        }
+    }
+
+    printf("Texutre[0:3]: %d %d %d\n", hostTextureMem[0], hostTextureMem[1], hostTextureMem[2]);
+
 
     Plane p(
          Vector3f(0, 0, 15), // was 0 0 1 for dragon
@@ -112,8 +170,8 @@ int main (int argc, char **argv) {
          mat_trans);
     s3.invert = true;
 
-    int t_size = 10;
-    int t_y = -1;
+    int t_size = 50000;
+    int t_y = -2;
     int t_z = 3;
     int t_x = 0;
 
@@ -133,7 +191,7 @@ int main (int argc, char **argv) {
     lighting.addObject(&t);
 
     BVHNode m(mat_forest_green, 3);
-    m.fromOBJ("./res/dragon.obj");
+    m.fromOBJ("./res/cube.obj");
     m.addObject(&t);
     m.addObject(&t2);
 
@@ -196,12 +254,12 @@ int main (int argc, char **argv) {
             break;
         case 4: // Dragon
             cam = new PerspectiveCamera(
-                Vector3f(1, 0, -1),
+                Vector3f(2, 0, -2),
                 Vector3f(0, 1.0, 0),
                 Vector3f(1.0, 0, 1),
                 Vector2f(2, 2),
                 Vector2f(display->getWidth(), display->getHeight()),
-                Vector3f(4, 0, -4)
+                Vector3f(5, 0, -5)
             );
             break;
         case 5:
@@ -243,9 +301,24 @@ int main (int argc, char **argv) {
 
     device_data_t device_data;
 
-    renderRaysInit(hostRayBuffer, &m, &device_data, display->getWidth(), display->getHeight());
+    renderRaysInit(hostRayBuffer, &m, &device_data, display->getWidth(), display->getHeight(), hostTextureMem, textureWidth, textureHeight);
+
 
     while(true) {
+
+        float transform_raw[16] = {
+            cos(theta), 0, sin(theta), 0,
+            0,          1,          0, 0,
+           -sin(theta), 0, cos(theta), 0,
+            0,          0,          0, 1
+        };
+
+        Matrix44 transform(transform_raw);
+        Matrix44 inv_transform = transform.invert();
+        Matrix44 inv_t_transform = inv_transform.transpose();
+        
+        wbCheck(cudaMemcpy(device_data.deviceTransform, &inv_transform, sizeof(Matrix44), cudaMemcpyHostToDevice));
+        wbCheck(cudaMemcpy(device_data.deviceInvTransform, &inv_t_transform, sizeof(Matrix44), cudaMemcpyHostToDevice));
 
         frames += 1;
 
@@ -253,17 +326,17 @@ int main (int argc, char **argv) {
             system_clock::now().time_since_epoch()
         ).count();
 
-        theta += (curr - last) / 1000.0 * 3;
+        theta += (curr - last) / 1000.0;
 
         frame_time += (curr - last);
 
         if(frame_time > 1000) {
-            printf("FPS: %d (%d ms)\n", frames, frame_time);
+            printf("FPS: %d (%d ms)\n", frames, frame_time / frames);
             frame_time = 0;
             frames = 0;
         }
 
-        renderRays(&device_data, buf, display->getWidth(), display->getHeight());
+        renderRays(&device_data, buf, display->getWidth(), display->getHeight(), textureWidth, textureHeight);
 
         display->redraw();
 

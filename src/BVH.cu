@@ -122,11 +122,15 @@ __device__ IntersectData BVHNodeGPU::intersectsBrute(Ray ray) {
     min_hit.t =  -1;
     for(int i = 0; i < num_triangles; i++) {
 
-        IntersectData data = triangles[i].meme(ray);
+        IntersectData data = triangles[i].intersectsGPU(ray);
         if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
             hit = true;
+            /*
             min_hit.t = data.t;
             min_hit.normal = data.normal;
+            min_hit.texCord = data.texCord;
+            */
+            min_hit = data;
         }
     }
 
@@ -170,8 +174,7 @@ __device__ IntersectData BVHNodeGPU::intersects(Ray ray) {
                 IntersectData data = curr->intersectsBrute(ray);
                 if((data.t >= 0) && (!hit || (data.t < min_hit.t))) {
                     hit = true;
-                    min_hit.t = data.t;
-                    min_hit.normal = data.normal;
+                    min_hit = data;
                 }
             } else {
                 IntersectData left_bb = curr->left->bounding_box.intersectsGPU(ray);
@@ -261,7 +264,7 @@ void BVHNode::partition() {
         }
     }
     
-    printf("Splitting on %d with size %f\n", axis, last_size);
+    //printf("Splitting on %d with size %f\n", axis, last_size);
 
     // Use nthstort to partition based on median
     std::nth_element(objects.begin(), objects.begin() + objects.size()/2, objects.end(),
@@ -295,9 +298,9 @@ void BVHNode::partition() {
 
         this->left = NULL;
         this->right = NULL;
-        printf("Forcing leaf\n");
+        //printf("Forcing leaf\n");
     } else {
-        printf("Left size: %d right size: %d\n", static_cast<BVHNode*>(this->left)->objects.size(), static_cast<BVHNode*>(this->right)->objects.size());
+        //printf("Left size: %d right size: %d\n", static_cast<BVHNode*>(this->left)->objects.size(), static_cast<BVHNode*>(this->right)->objects.size());
 
         ((BVHNode*) (this->left ))->large_objects.assign(this->large_objects.begin(), this->large_objects.end());
         ((BVHNode*) (this->right))->large_objects.assign(this->large_objects.begin(), this->large_objects.end());

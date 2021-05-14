@@ -60,9 +60,15 @@ class Triangle : public Renderable {
         Vector3f B_normal;
         Vector3f C_normal;
 
+        Vector2f A_tex;
+        Vector2f B_tex;
+        Vector2f C_tex;
+
         Vector3f normal;
 
         AABB* bounding_box;
+
+        bool hasTexture;
 
         // Default constructor that just sets all 3 points to 0, 0, 0
         Triangle() {};
@@ -74,8 +80,13 @@ class Triangle : public Renderable {
                 Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_,
                 Material* material);
 
+        Triangle(Vector3f A_, Vector3f B_, Vector3f C_, 
+                Vector3f A_normal_, Vector3f B_normal_, Vector3f C_normal_,
+                Vector2f A_tex_, Vector2f B_tex_, Vector2f C_tex_,
+                Material* material);
+
         // Tests of a ray intersects this trinagle
-        __host__ __device__ IntersectData meme(Ray r);
+        __host__ __device__ IntersectData intersectsGPU(Ray r);
         IntersectData intersects(Ray r);
         AABB* buildBoundingBox();
 

@@ -73,7 +73,6 @@ void Display::writeToPNG(const char* filename) {
 
 // Starts whatever is needed to actually display the screen
 void Display::run() {
-    printf("running");
     gtk_main();
 }
 

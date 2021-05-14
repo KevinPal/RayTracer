@@ -19,33 +19,33 @@ class Vector2f {
 
         // Constructors. Any unspecified component will default to 
         // 0
-        Vector2f(const Vector2f& other);
-        Vector2f(const Vector3f& other);
-        Vector2f(float x_, float y_);
-        Vector2f();
+        HOSTDEVICE Vector2f(const Vector2f& other);
+        HOSTDEVICE Vector2f(const Vector3f& other);
+        HOSTDEVICE Vector2f(float x_, float y_);
+        HOSTDEVICE Vector2f();
 
         // Gets the length of this vector
-        float length();
+        HOSTDEVICE float length();
 
         // Normalizes this vector
-        Vector2f normalize();
+        HOSTDEVICE Vector2f normalize();
 
         // Vector Vector operations
-        Vector2f operator-(const Vector2f& other) const;
-        Vector2f operator+(const Vector2f& other) const;
-        Vector2f operator/(const Vector2f& other) const;
-        Vector2f operator*(const Vector2f& other) const;
+        HOSTDEVICE Vector2f operator-(const Vector2f& other) const;
+        HOSTDEVICE Vector2f operator+(const Vector2f& other) const;
+        HOSTDEVICE Vector2f operator/(const Vector2f& other) const;
+        HOSTDEVICE Vector2f operator*(const Vector2f& other) const;
 
         // Component wise operations
-        Vector2f operator/(const float& other) const;
-        Vector2f operator*(const float& other) const;
+        HOSTDEVICE Vector2f operator/(const float& other) const;
+        HOSTDEVICE Vector2f operator*(const float& other) const;
 
         // Comparison operations
-        bool operator==(const Vector2f& other) const;
-        bool operator!=(const Vector2f& other) const;
+        HOSTDEVICE bool operator==(const Vector2f& other) const;
+        HOSTDEVICE bool operator!=(const Vector2f& other) const;
 
         // Prints this vector
-        void print(void) const;
+        HOSTDEVICE void print(void) const;
 };
 
 /*

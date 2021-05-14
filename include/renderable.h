@@ -25,6 +25,7 @@ class IntersectData {
         bool valid;
         float t;
         Vector3f normal;
+        Vector2f texCord;
         Material* material;
         Renderable* object;
 
@@ -32,12 +33,13 @@ class IntersectData {
         __host__ __device__ IntersectData() : valid(false), t(-1), object(NULL) {}
 
         // General constructor
-        __host__ __device__ IntersectData(float t_, Vector3f norm_, Material* m_, Renderable* object_):
-            valid(true), t(t_), normal(norm_), material(m_), object(object_) {}
+        __host__ __device__ IntersectData(float t_, Vector3f norm_, Material* m_, Renderable* object_, Vector2f texCord_):
+            valid(true), t(t_), normal(norm_), material(m_), object(object_), texCord(texCord_) {}
 
         // Copy consturctor
         __host__ __device__ IntersectData(const IntersectData& other) :
-            IntersectData(other.t, other.normal, other.material, other.object) {}
+            IntersectData(other.t, other.normal, other.material, other.object, other.texCord) {
+            }
 
         __host__ __device__ bool did_hit() { return t >= 0; }
 };
