@@ -254,12 +254,12 @@ int main (int argc, char **argv) {
             break;
         case 4: // Dragon
             cam = new PerspectiveCamera(
-                Vector3f(2, 0, -2),
+                Vector3f(13, 0, -13),
                 Vector3f(0, 1.0, 0),
                 Vector3f(1.0, 0, 1),
                 Vector2f(2, 2),
                 Vector2f(display->getWidth(), display->getHeight()),
-                Vector3f(5, 0, -5)
+                Vector3f(16, 0, -16)
             );
             break;
         case 5:
